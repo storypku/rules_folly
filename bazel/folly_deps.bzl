@@ -116,7 +116,7 @@ def folly_deps(syslibs = False):
     folly_version = "2019.11.11.00"
     http_archive(
         name = "folly",
-        build_file = "@rules_folly//third_party/folly:folly.BUILD",
+        build_file = "@rules_folly//folly:folly.BUILD",
         sha256 = "3b050f4ea17a12d7675ec4f1b02ef33dea2a5d46f09cc68e0165ca5b352c34b4",
         strip_prefix = "folly-{}".format(folly_version),
         urls = [
