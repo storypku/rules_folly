@@ -899,8 +899,6 @@ cc_library(
     includes = ["."],
     linkopts = [
         "-pthread",
-        # TODO(storypku): Move ssl out as external dependency
-        "-lssl",
     ],
     linkstatic = True,
     visibility = ["//visibility:public"],
@@ -926,5 +924,6 @@ cc_library(
         "@com_github_google_snappy//:snappy",
         "@com_github_libevent_libevent//:libevent",
         "@double-conversion//:double-conversion",
+        "@openssl//:ssl",
     ],
 )

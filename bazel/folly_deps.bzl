@@ -69,9 +69,25 @@ def folly_deps():
             "https://github.com/google/snappy/archive/1.1.9.tar.gz",
         ],
     )
+    maybe(
+        native.new_local_repository,
+        name = "openssl",
+        path = "/usr/include",
+        build_file = "@//third_party/openssl:openssl.BUILD",
+    )
 
-    # TODO(storypku): Tweak how folly should be built w/ ref:
-    #       https://github.com/google/glog/blob/master/bazel/glog.bzl
+    # NOTE(storypku): The following failed with error:
+    # external/folly/folly/ssl/OpenSSLVersionFinder.h:29:26:
+    # error: 'OPENSSL_VERSION' was not declared in this scope
+    # 29 |   return OpenSSL_version(OPENSSL_VERSION);
+    # maybe(
+    #    http_archive,
+    #    name = "openssl",
+    #    sha256 = "17f5e63875d592ac8f596a6c3d579978a7bf943247c1f8cbc8051935ea42b3e5",
+    #    strip_prefix = "boringssl-b3d98af9c80643b0a36d495693cc0e669181c0af",
+    #    urls = ["https://github.com/google/boringssl/archive/b3d98af9c80643b0a36d495693cc0e669181c0af.tar.gz"],
+    # )
+    # TODO(storypku): Ref: https://github.com/google/glog/blob/master/bazel/glog.bzl
     folly_version = "2019.11.11.00"
     http_archive(
         name = "folly",

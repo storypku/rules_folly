@@ -1,5 +1,6 @@
 # Bazel artifacts
 bazel-*
+user.bazelrc
 
 # Prerequisites
 *.d
