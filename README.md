@@ -7,6 +7,9 @@ On Ubuntu,
 ```bash
 sudo apt-get update \
     && sudo apt-get -y install --no-install-recommends \
+    autoconf \
+    automake \
+    libtool \
     libdouble-conversion-dev \
     libsnappy-dev \
     libssl-dev
