@@ -1,3 +1,6 @@
+# Bazel artifacts
+bazel-*
+
 # Prerequisites
 *.d
 
