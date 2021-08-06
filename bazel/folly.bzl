@@ -34,36 +34,37 @@ def folly_library(
         with_lzma = False,
         with_lz4 = False,
         with_zstd = False,
-        with_libiberty = False,
-        with_libunwind = False,
-        with_libdwarf = False,
+        with_unwind = False,
+        with_dwarf = False,
         with_libaio = False,
         with_liburing = False):
     # Exclude tests, benchmarks, and other standalone utility executables from the
     # library sources.  Test sources are listed separately below.
     common_excludes = [
         "folly/build/**",
-        "folly/experimental/exception_tracer/**",
-        "folly/experimental/pushmi/**",
-        "folly/futures/exercises/**",
         "folly/logging/example/**",
-        "folly/test/**",
-        "folly/**/test/**",
         "folly/tools/**",
     ]
 
     hdrs = native.glob(["folly/**/*.h"], exclude = common_excludes + [
+        "folly/test/**/*.h",
+        "folly/**/test/**/*.h",
         "folly/python/fibers.h",
         "folly/python/GILAwareManualExecutor.h",
     ])
     srcs = native.glob(["folly/**/*.cpp"], exclude = common_excludes + [
-        "folly/**/*Benchmark.cpp",
+        "folly/Benchmark.cpp",
+        "folly/test/**/*.cpp",
+        "folly/**/test/**/*.cpp",
         "folly/**/*Test.cpp",
         "folly/experimental/JSONSchemaTester.cpp",
         "folly/experimental/io/HugePageUtil.cpp",
+        "folly/python/error.cpp",
+        "folly/python/executor.cpp",
         "folly/python/fibers.cpp",
         "folly/python/GILAwareManualExecutor.cpp",
         "folly/cybld/folly/executor.cpp",
+        "folly/experimental/symbolizer/Addr2Line.cpp",
     ])
 
     # Explicitly include utility library code from inside
@@ -103,7 +104,8 @@ def folly_library(
     # required to build them
     common_excludes = []
 
-    # NOTE(storypku): hardcode with_libsodium to False for now
+    # NOTE(storypku): hardcode with_libsodium set to False for now
+    # Ref: https://github.com/facebook/folly/blob/v2021.09.06.00/CMakeLists.txt#L270
     hdrs_excludes = [
         "folly/experimental/crypto/Blake2xb.h",
         "folly/experimental/crypto/detail/LtHashInternal.h",
@@ -119,19 +121,6 @@ def folly_library(
         "folly/experimental/crypto/LtHash.cpp",
     ]
 
-    # Excerpt from <TOP-DIR>/CMake/folly-deps.cmake
-    # check_function_exists(backtrace FOLLY_HAVE_BACKTRACE)
-    # if (FOLLY_HAVE_ELF_H AND FOLLY_HAVE_BACKTRACE AND LIBDWARF_FOUND)
-    # set(FOLLY_USE_SYMBOLIZER ON)
-    # Question: with_libdwarf is equivalent to use_symbolizer ?
-    if with_libdwarf == False:
-        common_excludes = common_excludes + [
-            "folly/experimental/symbolizer/**",
-        ]
-        srcs_excludes = srcs_excludes + [
-            "folly/SingletonStackTrace.cpp",
-        ]
-
     if with_libaio == False:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/io/AsyncIO.h",
@@ -143,66 +132,96 @@ def folly_library(
     if with_liburing == False:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/io/IoUring.h",
+            "folly/experimental/io/IoUringBackend.h",
         ]
         srcs_excludes = srcs_excludes + [
             "folly/experimental/io/IoUring.cpp",
+            "folly/experimental/io/IoUringBackend.cpp",
         ]
-
     if with_libaio == False and with_liburing == False:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/io/AsyncBase.h",
+            "folly/experimental/io/PollIoBackend.h",
+            "folly/experimental/io/SimpleAsyncIO.h",
         ]
         srcs_excludes = srcs_excludes + [
             "folly/experimental/io/AsyncBase.cpp",
+            "folly/experimental/io/PollIoBackend.cpp",
+            "folly/experimental/io/SimpleAsyncIO.cpp",
         ]
 
-        common_defs = {
-            "@FOLLY_HAVE_PTHREAD@": "1",
-            "@FOLLY_HAVE_PTHREAD_ATFORK@": "1",
-            "@FOLLY_HAVE_MEMRCHR@": "1",
-            "@FOLLY_HAVE_ACCEPT4@": "1",
-            "@FOLLY_HAVE_PREADV@": "1",
-            "@FOLLY_HAVE_PWRITEV@": "1",
-            "@FOLLY_HAVE_CLOCK_GETTIME@": "1",
-            "@FOLLY_HAVE_PIPE2@": "1",
-            "@FOLLY_HAVE_SENDMMSG@": "1",
-            "@FOLLY_HAVE_RECVMMSG@": "1",
-            "@FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF@": "1",
-            "@FOLLY_HAVE_IFUNC@": "1",
-            "@FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE@": "1",
-            "@FOLLY_HAVE_UNALIGNED_ACCESS@": "1",
-            "@FOLLY_HAVE_VLA@": "1",
-            "@FOLLY_HAVE_WEAK_SYMBOLS@": "1",
-            "@FOLLY_HAVE_LINUX_VDSO@": "1",
-            "@FOLLY_HAVE_MALLOC_USABLE_SIZE@": "1",
-            "@FOLLY_HAVE_INT128_T@": "1",
-            "@FOLLY_SUPPLY_MISSING_INT128_TRAITS@": "0",
-            "@FOLLY_HAVE_WCHAR_SUPPORT@": "1",
-            "@HAVE_VSNPRINTF_ERRORS@": "1",
-            "@FOLLY_HAVE_SHADOW_LOCAL_WARNINGS@": "1",
-            "@FOLLY_SUPPORT_SHARED_LIBRARY@": "1",
-        }
+    # NOTE(storypku):
+    # Compare header and source files with that of CMake
+    # my_hdrs = native.glob(hdrs, exclude = common_excludes + hdrs_excludes)
+    # print("=== # of headers: {} ===".format(len(my_hdrs)))
+    # print("===== HEADERS END =====")
+    # my_srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes)
+    # print("=== # of srcs: {} ===".format(len(my_srcs)))
+    # for my_src in my_srcs:
+    #    print(my_src)
+    # print("===== SRCS END =====")
+    if with_gflags == False:
+        hdrs_excludes = hdrs_excludes + [
+            "folly/experimental/NestedCommandLineApp.h",
+            "folly/experimental/ProgramOptions.h",
+        ]
+        srcs_excludes = srcs_excludes + [
+            "folly/experimental/NestedCommandLineApp.cpp",
+            "folly/experimental/ProgramOptions.cpp",
+        ]
+
+    # TODO(jiaming)
+    common_defs = {
+        "@FOLLY_HAVE_PTHREAD@": "1",
+        "@FOLLY_HAVE_PTHREAD_ATFORK@": "1",
+        "@FOLLY_HAVE_ACCEPT4@": "1",
+        "@FOLLY_HAVE_GETRANDOM@": "1",
+        "@FOLLY_HAVE_PREADV@": "1",
+        "@FOLLY_HAVE_PWRITEV@": "1",
+        "@FOLLY_HAVE_CLOCK_GETTIME@": "1",
+        "@FOLLY_HAVE_PIPE2@": "1",
+        "@FOLLY_HAVE_SENDMMSG@": "1",
+        "@FOLLY_HAVE_RECVMMSG@": "1",
+        "@FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF@": "1",
+        "@FOLLY_HAVE_IFUNC@": "1",
+        "@FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE@": "1",
+        "@FOLLY_HAVE_UNALIGNED_ACCESS@": "1",
+        "@FOLLY_HAVE_VLA@": "1",
+        "@FOLLY_HAVE_WEAK_SYMBOLS@": "1",
+        "@FOLLY_HAVE_LINUX_VDSO@": "1",
+        "@FOLLY_HAVE_MALLOC_USABLE_SIZE@": "1",
+        "@FOLLY_HAVE_INT128_T@": "0",
+        "@FOLLY_HAVE_WCHAR_SUPPORT@": "1",
+        "@define FOLLY_HAVE_EXTRANDOM_SFMT19937@": "1",
+        "@HAVE_VSNPRINTF_ERRORS@": "1",
+        "@FOLLY_HAVE_SHADOW_LOCAL_WARNINGS@": "1",
+        "@FOLLY_SUPPORT_SHARED_LIBRARY@": "1",
+        "@FOLLY_DEMANGLE_MAX_SYMBOL_SIZE": "1024",
+    }
 
     # Note(storypku):
-    # FOLLY_HAVE_EXTRANDOM_SFMT19937 will make <ext/random> included, causing error:
-    # /usr/include/aarch64-linux-gnu/c++/7.5.0/ext/opt_random.h:81:13: error: unknown type name '__Uint32x4_t
     total_defs = dict_union(common_defs, {
         "@FOLLY_USE_LIBSTDCPP@": "1",
         "@FOLLY_USE_LIBCPP@": "0",
-        "@FOLLY_HAVE_EXTRANDOM_SFMT19937@": "0",
-        "@FOLLY_LIBRARY_SANITIZE_ADDRESS@": "0",
-        "@FOLLY_HAVE_LIBSNAPPY@": "1",
-        "@FOLLY_HAVE_LIBZ@": "1",
+        "@FOLLY_HAVE_LIBGFLAGS@": _val(with_gflags),
+        "@FOLLY_UNUSUAL_GFLAGS_NAMESPACE@": "0",
         "@FOLLY_GFLAGS_NAMESPACE@": "gflags",
         "@FOLLY_HAVE_LIBGLOG@": "1",
-        "@FOLLY_UNUSUAL_GFLAGS_NAMESPACE@": "0",
-        "@FOLLY_HAVE_LIBGFLAGS@": _val(with_gflags),
-        "@FOLLY_USE_JEMALLOC@": _val(with_jemalloc),
-        "@FOLLY_USE_SYMBOLIZER@": _val(with_libdwarf),
         "@FOLLY_HAVE_LIBLZ4@": _val(with_lz4),
         "@FOLLY_HAVE_LIBLZMA@": _val(with_lzma),
+        "@FOLLY_HAVE_LIBSNAPPY@": "0",
+        "@FOLLY_HAVE_LIBZ@": "1",
         "@FOLLY_HAVE_LIBZSTD@": _val(with_zstd),
         "@FOLLY_HAVE_LIBBZ2@": _val(with_bz2),
+        "@FOLLY_USE_JEMALLOC@": _val(with_jemalloc),
+        "@FOLLY_HAVE_LIBUNWIND@": _val(with_unwind),
+        "@FOLLY_HAVE_DWARF@": _val(with_dwarf),
+        "@FOLLY_HAVE_ELF@": "1",
+        "@FOLLY_HAVE_SWAPCONTEXT@": "1",
+        "@FOLLY_HAVE_BACKTRACE@": "1",
+        "@FOLLY_USE_SYMBOLIZER@": "1",
+        "@FOLLY_LIBRARY_SANITIZE_ADDRESS@": "0",
+        "@FOLLY_HAVE_LIBRT@": "0",
     })
 
     native.genrule(
@@ -243,9 +262,12 @@ def folly_library(
                native.glob(hdrs, exclude = common_excludes + hdrs_excludes),
         srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes),
         copts = [
+            "-std=gnu++1z",
             "-fPIC",
-            "-faligned-new",
+            "-finput-charset=UTF-8",
+            "-fsigned-char",
             "-fopenmp",
+            "-faligned-new",
             "-Wall",
             "-Wno-deprecated",
             "-Wno-deprecated-declarations",
@@ -255,7 +277,6 @@ def folly_library(
             "-Wunused-result",
             "-Wshadow-compatible-local",
             "-Wno-noexcept-type",
-            "-std=gnu++14",
         ] + select({
             ":linux_x86_64": ["-mpclmul"],
             "//conditions:default": [],
@@ -264,9 +285,18 @@ def folly_library(
         linkopts = [
             "-pthread",
             "-ldl",
+            "-lstdc++fs",
         ],
+        # if (FOLLY_STDLIB_LIBSTDCXX AND NOT FOLLY_STDLIB_LIBSTDCXX_GE_9)
+        # list (APPEND CMAKE_REQUIRED_LIBRARIES stdc++fs)
+        # list (APPEND FOLLY_LINK_LIBRARIES stdc++fs)
+        # endif()
+        # if (FOLLY_STDLIB_LIBCXX AND NOT FOLLY_STDLIB_LIBCXX_GE_9)
+        # list (APPEND CMAKE_REQUIRED_LIBRARIES c++fs)
+        # list (APPEND FOLLY_LINK_LIBRARIES c++fs)
+        # endif ()
         # Ref: https://docs.bazel.build/versions/main/be/c-cpp.html#cc_library.linkstatic
-        linkstatic = True,
+        # linkstatic = True,
         visibility = ["//visibility:public"],
         deps = [
             "@boost//:algorithm",
@@ -289,6 +319,7 @@ def folly_library(
             "@com_github_google_glog//:glog",
             "@com_github_google_snappy//:snappy",
             "@com_github_libevent_libevent//:libevent",
+            "@com_github_fmtlib_fmt//:fmt",
             "@double-conversion//:double-conversion",
             "@openssl//:ssl",
         ],

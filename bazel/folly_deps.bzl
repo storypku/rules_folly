@@ -15,10 +15,10 @@ def folly_deps(syslibs = False):
     maybe(
         http_archive,
         name = "com_github_google_glog",
-        sha256 = "f28359aeba12f30d73d9e4711ef356dc842886968112162bc73002645139c39c",
-        strip_prefix = "glog-0.4.0",
+        strip_prefix = "glog-0.5.0",
+        sha256 = "eede71f28371bf39aa69b45de23b329d37214016e2055269b3b5e7cfd40b59f5",
         urls = [
-            "https://github.com/google/glog/archive/v0.4.0.tar.gz",
+            "https://github.com/google/glog/archive/v0.5.0.tar.gz",
         ],
     )
 
@@ -92,6 +92,15 @@ def folly_deps(syslibs = False):
             build_file = "@rules_folly//third_party/libevent:libevent.BUILD",
         )
 
+    maybe(
+        http_archive,
+        name = "com_github_fmtlib_fmt",
+        urls = ["https://github.com/fmtlib/fmt/archive/8.0.1.tar.gz"],
+        sha256 = "b06ca3130158c625848f3fb7418f235155a4d389b2abc3a6245fb01cb0eb1e01",
+        strip_prefix = "fmt-8.0.1",
+        build_file = "@rules_folly//third_party/fmtlib:fmtlib.BUILD",
+    )
+
     # Note(jiaming):
     # Here we choose the latest (as of 08.04.2021) version of rules_boost as
     # AArch64 support was only complete in recent versions. We had to resolve
@@ -130,11 +139,10 @@ def folly_deps(syslibs = False):
     # )
 
     # TODO(storypku): Ref: https://github.com/google/glog/blob/master/bazel/glog.bzl
-    folly_version = "2019.11.11.00"
+    folly_version = "2021.09.06.00"
     http_archive(
         name = "folly",
-        build_file = "@rules_folly//folly:folly.BUILD",
-        sha256 = "3b050f4ea17a12d7675ec4f1b02ef33dea2a5d46f09cc68e0165ca5b352c34b4",
+        build_file = "@rules_folly//third_party/folly:folly.BUILD",
         strip_prefix = "folly-{}".format(folly_version),
         urls = [
             "https://github.com/facebook/folly/archive/v{}.tar.gz".format(folly_version),
