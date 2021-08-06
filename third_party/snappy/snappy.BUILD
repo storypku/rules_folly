@@ -88,10 +88,11 @@ genrule(
     name = "snappy_stubs_public_h",
     srcs = ["snappy-stubs-public.h.in"],
     outs = ["snappy-stubs-public.h"],
+    # NOTE(jiaming): Change patch-level no. accordingly.
     cmd = ("sed " +
            "-e 's/$${\\(.*\\)_01}/\\1/g' " +
            "-e 's/$${SNAPPY_MAJOR}/1/g' " +
            "-e 's/$${SNAPPY_MINOR}/1/g' " +
-           "-e 's/$${SNAPPY_PATCHLEVEL}/4/g' " +
+           "-e 's/$${SNAPPY_PATCHLEVEL}/9/g' " +
            "$< >$@"),
 )

@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-def folly_deps():
+def folly_deps(syslibs = False):
     maybe(
         http_archive,
         name = "com_github_gflags_gflags",
@@ -12,6 +12,7 @@ def folly_deps():
             "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz",
         ],
     )
+
     maybe(
         http_archive,
         name = "com_github_google_glog",
@@ -23,23 +24,58 @@ def folly_deps():
         ],
     )
 
-    maybe(
-        http_archive,
-        name = "double-conversion",
-        strip_prefix = "double-conversion-3.1.5",
-        sha256 = "a63ecb93182134ba4293fd5f22d6e08ca417caafa244afaa751cbfddf6415b13",
-        urls = ["https://github.com/google/double-conversion/archive/v3.1.5.tar.gz"],
-    )
+    if syslibs == True:
+        maybe(
+            native.new_local_repository,
+            name = "double-conversion",
+            path = "/usr/include",
+            build_file = "@rules_folly//third_party/syslibs:double-conversion.BUILD",
+        )
+    else:
+        maybe(
+            http_archive,
+            name = "double-conversion",
+            strip_prefix = "double-conversion-3.1.5",
+            sha256 = "a63ecb93182134ba4293fd5f22d6e08ca417caafa244afaa751cbfddf6415b13",
+            urls = ["https://github.com/google/double-conversion/archive/v3.1.5.tar.gz"],
+        )
+
+    if syslibs == True:
+        maybe(
+            native.new_local_repository,
+            name = "com_github_google_snappy",
+            path = "/usr/include",
+            build_file = "@rules_folly//third_party/syslibs:snappy.BUILD",
+        )
+    else:
+        maybe(
+            http_archive,
+            name = "com_github_google_snappy",
+            build_file = "@//third_party/snappy:snappy.BUILD",
+            strip_prefix = "snappy-1.1.9",
+            sha256 = "75c1fbb3d618dd3a0483bff0e26d0a92b495bbe5059c8b4f1c962b478b6e06e7",
+            urls = [
+                "https://github.com/google/snappy/archive/1.1.9.tar.gz",
+            ],
+        )
 
     # ===== libevent (libevent.org) dependency =====
-    maybe(
-        http_archive,
-        name = "com_github_libevent_libevent",
-        sha256 = "316ddb401745ac5d222d7c529ef1eada12f58f6376a66c1118eee803cb70f83d",
-        urls = ["https://github.com/libevent/libevent/archive/release-2.1.8-stable.tar.gz"],
-        strip_prefix = "libevent-release-2.1.8-stable",
-        build_file = "@//third_party/libevent:libevent.BUILD",
-    )
+    if syslibs == True:
+        maybe(
+            native.new_local_repository,
+            name = "com_github_libevent_libevent",
+            path = "/usr/include",
+            build_file = "@rules_folly//third_party/syslibs:libevent.BUILD",
+        )
+    else:
+        maybe(
+            http_archive,
+            name = "com_github_libevent_libevent",
+            sha256 = "316ddb401745ac5d222d7c529ef1eada12f58f6376a66c1118eee803cb70f83d",
+            urls = ["https://github.com/libevent/libevent/archive/release-2.1.8-stable.tar.gz"],
+            strip_prefix = "libevent-release-2.1.8-stable",
+            build_file = "@rules_folly//third_party/libevent:libevent.BUILD",
+        )
 
     # Note(jiaming):
     # Here we choose the latest (as of 08.04.2021) version of rules_boost as
@@ -60,20 +96,10 @@ def folly_deps():
     )
 
     maybe(
-        http_archive,
-        name = "com_github_google_snappy",
-        build_file = "@//third_party/snappy:snappy.BUILD",
-        strip_prefix = "snappy-1.1.9",
-        sha256 = "75c1fbb3d618dd3a0483bff0e26d0a92b495bbe5059c8b4f1c962b478b6e06e7",
-        urls = [
-            "https://github.com/google/snappy/archive/1.1.9.tar.gz",
-        ],
-    )
-    maybe(
         native.new_local_repository,
         name = "openssl",
         path = "/usr/include",
-        build_file = "@//third_party/openssl:openssl.BUILD",
+        build_file = "@rules_folly//third_party/syslibs:openssl.BUILD",
     )
 
     # NOTE(storypku): The following failed with error:

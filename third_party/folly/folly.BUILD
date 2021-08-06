@@ -2,10 +2,28 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
+config_setting(
+    name = "linux_aarch64",
+    constraint_values = [
+        "@bazel_tools//platforms:linux",
+        "@bazel_tools//platforms:aarch64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@bazel_tools//platforms:linux",
+        "@bazel_tools//platforms:x86_64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 genrule(
     name = "folly_config_h",
     srcs = [
-        "@//third_party/folly:folly-config.h",
+        "@rules_folly//third_party/folly:folly-config.h",
     ],
     outs = [
         "folly/folly-config.h",
@@ -895,7 +913,10 @@ cc_library(
         "-Wno-noexcept-type",
         "-fopenmp",
         "-std=gnu++14",
-    ],
+    ] + select({
+        ":linux_x86_64": ["-mpclmul"],
+        "//conditions:default": [],
+    }),
     includes = ["."],
     linkopts = [
         "-pthread",
