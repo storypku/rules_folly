@@ -8,7 +8,6 @@ def folly_deps(syslibs = False):
         sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
         strip_prefix = "gflags-2.2.2",
         urls = [
-            "https://apollo-system.cdn.bcebos.com/archive/6.0/v2.2.2.tar.gz",
             "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz",
         ],
     )
@@ -19,7 +18,6 @@ def folly_deps(syslibs = False):
         sha256 = "f28359aeba12f30d73d9e4711ef356dc842886968112162bc73002645139c39c",
         strip_prefix = "glog-0.4.0",
         urls = [
-            "https://apollo-system.cdn.bcebos.com/archive/6.0/v0.4.0.tar.gz",
             "https://github.com/google/glog/archive/v0.4.0.tar.gz",
         ],
     )
@@ -113,6 +111,7 @@ def folly_deps(syslibs = False):
     #    strip_prefix = "boringssl-b3d98af9c80643b0a36d495693cc0e669181c0af",
     #    urls = ["https://github.com/google/boringssl/archive/b3d98af9c80643b0a36d495693cc0e669181c0af.tar.gz"],
     # )
+
     # TODO(storypku): Ref: https://github.com/google/glog/blob/master/bazel/glog.bzl
     folly_version = "2019.11.11.00"
     http_archive(
