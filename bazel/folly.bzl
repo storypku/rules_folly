@@ -260,6 +260,7 @@ def folly_library(
         includes = ["."],
         linkopts = [
             "-pthread",
+            "-ldl",
         ],
         # Ref: https://docs.bazel.build/versions/main/be/c-cpp.html#cc_library.linkstatic
         linkstatic = True,

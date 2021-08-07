@@ -35,3 +35,15 @@ cc_test(
         "@folly",
     ],
 )
+
+cc_test(
+    name = "checksum_test",
+    size = "small",
+    srcs = ["checksum_test.cc"],
+    deps = [
+        "@boost//:crc",
+        "@com_github_google_glog//:glog",
+        "@com_google_googletest//:gtest_main",
+        "@folly",
+    ],
+)
