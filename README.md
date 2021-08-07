@@ -11,8 +11,8 @@ sudo apt-get update \
     automake \
     libtool \
     libdouble-conversion-dev \
-    libsnappy-dev \
     libssl-dev
+    # libsnappy-dev
 ```
 
 ## How To Use

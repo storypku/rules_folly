@@ -29,6 +29,7 @@ cc_library(
         #       "-Wno-implicit-function-declaration",
     ],
     defines = ["HAVE_SYS_UIO_H"],
+    includes = ["."],
 )
 
 genrule(
