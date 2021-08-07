@@ -41,6 +41,23 @@ def folly_deps(syslibs = False):
     if syslibs == True:
         maybe(
             native.new_local_repository,
+            name = "zlib",
+            path = "/usr/include",
+            build_file = "@rules_folly//third_party/syslibs:zlib.BUILD",
+        )
+    else:
+        maybe(
+            http_archive,
+            name = "zlib",
+            sha256 = "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
+            strip_prefix = "zlib-1.2.11",
+            build_file = "@rules_folly//third_party/zlib:zlib.BUILD",
+            urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
+        )
+
+    if syslibs == True:
+        maybe(
+            native.new_local_repository,
             name = "com_github_google_snappy",
             path = "/usr/include",
             build_file = "@rules_folly//third_party/syslibs:snappy.BUILD",
@@ -49,7 +66,7 @@ def folly_deps(syslibs = False):
         maybe(
             http_archive,
             name = "com_github_google_snappy",
-            build_file = "@//third_party/snappy:snappy.BUILD",
+            build_file = "@rules_folly//third_party/snappy:snappy.BUILD",
             strip_prefix = "snappy-1.1.9",
             sha256 = "75c1fbb3d618dd3a0483bff0e26d0a92b495bbe5059c8b4f1c962b478b6e06e7",
             urls = [

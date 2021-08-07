@@ -58,9 +58,9 @@ genrule(
         "mkdir -p $$TMP_DIR",
         "cp -R $$(pwd)/external/com_github_libevent_libevent/* $$TMP_DIR",
         "cd $$TMP_DIR",
-        "./autogen.sh",
-        "./configure --prefix=$$INSTALL_DIR CFLAGS=-fPIC CXXFLAGS=-fPIC --enable-shared=no --disable-openssl",
-        "make install",
+        "./autogen.sh >/dev/null",
+        "./configure --prefix=$$INSTALL_DIR CFLAGS=-fPIC CXXFLAGS=-fPIC --enable-shared=no --disable-openssl >/dev/null",
+        "make -j$$(nproc) install >/dev/null",
         "rm -rf $$TMP_DIR",
     ]),
 )
