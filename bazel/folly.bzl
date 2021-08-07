@@ -1,6 +1,32 @@
 # Implement a macro folly_library() that the BUILD file can load.
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
+# Ref: https://github.com/google/glog/blob/v0.5.0/bazel/glog.bzl
+def expand_template_impl(ctx):
+    ctx.actions.expand_template(
+        template = ctx.file.template,
+        output = ctx.outputs.out,
+        substitutions = ctx.attr.substitutions,
+    )
+
+expand_template = rule(
+    implementation = expand_template_impl,
+    attrs = {
+        "template": attr.label(mandatory = True, allow_single_file = True),
+        "substitutions": attr.string_dict(mandatory = True),
+        "out": attr.output(mandatory = True),
+    },
+)
+
+def dict_union(x, y):
+    z = {}
+    z.update(x)
+    z.update(y)
+    return z
+
+def _val(predicate):
+    return "1" if predicate else "0"
+
 def folly_library(
         with_gflags = True,
         with_jemalloc = False,
@@ -13,17 +39,6 @@ def folly_library(
         with_libdwarf = False,
         with_libaio = False,
         with_liburing = False):
-    native.genrule(
-        name = "folly_config_h",
-        srcs = [
-            "CMake/folly-config.h.cmake",
-        ],
-        outs = [
-            "folly/folly-config.h",
-        ],
-        cmd = "awk '{ gsub(/^#cmakedefine/, \"//define\"); print; }' $< > $@",
-    )
-
     # Exclude tests, benchmarks, and other standalone utility executables from the
     # library sources.  Test sources are listed separately below.
     common_excludes = [
@@ -141,49 +156,82 @@ def folly_library(
             "folly/experimental/io/AsyncBase.cpp",
         ]
 
-    config_copts = [
-                       "-DFOLLY_HAVE_PTHREAD=1",
-                       "-DFOLLY_HAVE_PTHREAD_ATFORK=1",
-                       "-DFOLLY_USE_LIBSTDCPP=1",
-                       #undef FOLLY_USE_LIBCPP
-                       "-DFOLLY_HAVE_MEMRCHR=1",
-                       "-DFOLLY_HAVE_ACCEPT4=1",
-                       "-DFOLLY_HAVE_PREADV=1",
-                       "-DFOLLY_HAVE_PWRITEV=1",
-                       "-DFOLLY_HAVE_CLOCK_GETTIME=1",
-                       "-DFOLLY_HAVE_PIPE2=1",
-                       "-DFOLLY_HAVE_SENDMMSG=1",
-                       "-DFOLLY_HAVE_RECVMMSG=1",
-                       "-DFOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF=1",
-                       "-DFOLLY_HAVE_IFUNC=1",
-                       "-DFOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE=1",
-                       "-DFOLLY_HAVE_UNALIGNED_ACCESS=1",
-                       "-DFOLLY_HAVE_VLA=1",
-                       "-DFOLLY_HAVE_WEAK_SYMBOLS=1",
-                       "-DFOLLY_HAVE_LINUX_VDSO=1",
-                       "-DFOLLY_HAVE_MALLOC_USABLE_SIZE=1",
-                       "-DFOLLY_HAVE_INT128_T=1",
-                       #undef FOLLY_SUPPLY_MISSING_INT128_TRAITS
-                       "-DFOLLY_HAVE_WCHAR_SUPPORT=1",
-                       "-DFOLLY_HAVE_EXTRANDOM_SFMT19937=1",
-                       "-DHAVE_VSNPRINTF_ERRORS=1",
-                       "-DFOLLY_DEMANGLE_MAX_SYMBOL_SIZE=1024",
-                       "-DFOLLY_HAVE_SHADOW_LOCAL_WARNINGS=1",
-                       "-DFOLLY_SUPPORT_SHARED_LIBRARY=1",
-                       "-DFOLLY_LIBRARY_SANITIZE_ADDRESS=0",
-                       #=============================================#
-                       "-DFOLLY_HAVE_LIBSNAPPY=1",
-                       "-DFOLLY_HAVE_LIBZ=1",
-                       "-DFOLLY_GFLAGS_NAMESPACE=gflags",
-                       # TODO(storypku): with_glog == True
-                       "-DFOLLY_HAVE_LIBGLOG=1",
-                   ] + (["-DFOLLY_HAVE_LIBGFLAGS=1"] if with_gflags else []) + \
-                   (["-DFOLLY_USE_JEMALLOC=1"] if with_jemalloc else []) + \
-                   (["-DFOLLY_USE_SYMBOLIZER=1"] if with_libdwarf else []) + \
-                   (["-DFOLLY_HAVE_LIBLZ4=1"] if with_lz4 else []) + \
-                   (["-DFOLLY_HAVE_LIBLZMA=1"] if with_lzma else []) + \
-                   (["-DFOLLY_HAVE_LIBZSTD=1"] if with_zstd else []) + \
-                   (["-DFOLLY_HAVE_LIBLZMA=1"] if with_bz2 else [])
+        common_defs = {
+            "@FOLLY_HAVE_PTHREAD@": "1",
+            "@FOLLY_HAVE_PTHREAD_ATFORK@": "1",
+            "@FOLLY_HAVE_MEMRCHR@": "1",
+            "@FOLLY_HAVE_ACCEPT4@": "1",
+            "@FOLLY_HAVE_PREADV@": "1",
+            "@FOLLY_HAVE_PWRITEV@": "1",
+            "@FOLLY_HAVE_CLOCK_GETTIME@": "1",
+            "@FOLLY_HAVE_PIPE2@": "1",
+            "@FOLLY_HAVE_SENDMMSG@": "1",
+            "@FOLLY_HAVE_RECVMMSG@": "1",
+            "@FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF@": "1",
+            "@FOLLY_HAVE_IFUNC@": "1",
+            "@FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE@": "1",
+            "@FOLLY_HAVE_UNALIGNED_ACCESS@": "1",
+            "@FOLLY_HAVE_VLA@": "1",
+            "@FOLLY_HAVE_WEAK_SYMBOLS@": "1",
+            "@FOLLY_HAVE_LINUX_VDSO@": "1",
+            "@FOLLY_HAVE_MALLOC_USABLE_SIZE@": "1",
+            "@FOLLY_HAVE_INT128_T@": "1",
+            "@FOLLY_SUPPLY_MISSING_INT128_TRAITS@": "0",
+            "@FOLLY_HAVE_WCHAR_SUPPORT@": "1",
+            "@FOLLY_HAVE_EXTRANDOM_SFMT19937@": "1",
+            "@HAVE_VSNPRINTF_ERRORS@": "1",
+            "@FOLLY_HAVE_SHADOW_LOCAL_WARNINGS@": "1",
+            "@FOLLY_SUPPORT_SHARED_LIBRARY@": "1",
+        }
+
+    total_defs = dict_union(common_defs, {
+        "@FOLLY_USE_LIBSTDCPP@": "1",
+        "@FOLLY_USE_LIBCPP@": "0",
+        "@FOLLY_LIBRARY_SANITIZE_ADDRESS@": "0",
+        "@FOLLY_HAVE_LIBSNAPPY@": "1",
+        "@FOLLY_HAVE_LIBZ@": "1",
+        "@FOLLY_GFLAGS_NAMESPACE@": "gflags",
+        "@FOLLY_HAVE_LIBGLOG@": "1",
+        "@FOLLY_UNUSUAL_GFLAGS_NAMESPACE@": "0",
+        "@FOLLY_HAVE_LIBGFLAGS@": _val(with_gflags),
+        "@FOLLY_USE_JEMALLOC@": _val(with_jemalloc),
+        "@FOLLY_USE_SYMBOLIZER@": _val(with_libdwarf),
+        "@FOLLY_HAVE_LIBLZ4@": _val(with_lz4),
+        "@FOLLY_HAVE_LIBLZMA@": _val(with_lzma),
+        "@FOLLY_HAVE_LIBZSTD@": _val(with_zstd),
+        "@FOLLY_HAVE_LIBBZ2@": _val(with_bz2),
+    })
+
+    native.genrule(
+        name = "folly_config_in_h",
+        srcs = [
+            "CMake/folly-config.h.cmake",
+        ],
+        outs = [
+            "folly/folly-config.h.in",
+        ],
+        cmd = "$(location @rules_folly//bazel:generate_config_in.sh) < $< > $@",
+        tools = ["@rules_folly//bazel:generate_config_in.sh"],
+    )
+
+    expand_template(
+        name = "folly_config_h_unstripped",
+        template = "folly/folly-config.h.in",
+        out = "folly/folly-config.h.unstripped",
+        substitutions = total_defs,
+    )
+
+    native.genrule(
+        name = "folly_config_h",
+        srcs = [
+            "folly/folly-config.h.unstripped",
+        ],
+        outs = [
+            "folly/folly-config.h",
+        ],
+        cmd = "$(location @rules_folly//bazel:strip_config_h.sh) < $< > $@",
+        tools = ["@rules_folly//bazel:strip_config_h.sh"],
+    )
 
     # CHECK_CXX_COMPILER_FLAG(-mpclmul COMPILER_HAS_M_PCLMUL)
     cc_library(
@@ -191,7 +239,7 @@ def folly_library(
         hdrs = ["folly_config_h"] +
                native.glob(hdrs, exclude = common_excludes + hdrs_excludes),
         srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes),
-        copts = config_copts + [
+        copts = [
             "-fPIC",
             "-faligned-new",
             "-fopenmp",

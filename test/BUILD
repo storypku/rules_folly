@@ -15,12 +15,22 @@ cc_test(
 )
 
 cc_test(
-    name = "mpmc_queue_test",
+    name = "cpu_id_test",
     size = "small",
-    srcs = ["mpmc_queue_test.cc"],
+    srcs = ["cpu_id_test.cc"],
     deps = [
-        "@boost//:intrusive_ptr",
-        "@boost//:thread",
+        "@com_google_googletest//:gtest_main",
+        "@folly",
+    ],
+)
+
+cc_test(
+    name = "fingerprint_test",
+    size = "small",
+    srcs = ["fingerprint_test.cc"],
+    deps = [
+        "@com_github_gflags_gflags//:gflags",
+        "@com_github_google_glog//:glog",
         "@com_google_googletest//:gtest_main",
         "@folly",
     ],
