@@ -22,7 +22,7 @@ In your `WORKSPACE` file, add the following:
 ```
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-git_rev = "cbb181215ea981e64adf78ac8f389a7f32afa986"
+git_rev = "8bed33ac0ac509771f0fca91c834fc027c38251e"
 http_archive(
     name = "rules_folly",
     sha256 = "0564a76755ee05f4f1b61aafa817bd1a8632daecdd4578ef39b2c37a1e739516",
