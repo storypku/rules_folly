@@ -1,4 +1,3 @@
-#define FOLLY_HAVE_EXTRANDOM_SFMT19937
 #include "folly/Random.h"
 
 #include "gtest/gtest.h"

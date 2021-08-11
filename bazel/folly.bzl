@@ -178,15 +178,18 @@ def folly_library(
             "@FOLLY_HAVE_INT128_T@": "1",
             "@FOLLY_SUPPLY_MISSING_INT128_TRAITS@": "0",
             "@FOLLY_HAVE_WCHAR_SUPPORT@": "1",
-            "@FOLLY_HAVE_EXTRANDOM_SFMT19937@": "1",
             "@HAVE_VSNPRINTF_ERRORS@": "1",
             "@FOLLY_HAVE_SHADOW_LOCAL_WARNINGS@": "1",
             "@FOLLY_SUPPORT_SHARED_LIBRARY@": "1",
         }
 
+    # Note(storypku):
+    # FOLLY_HAVE_EXTRANDOM_SFMT19937 will make <ext/random> included, causing error:
+    # /usr/include/aarch64-linux-gnu/c++/7.5.0/ext/opt_random.h:81:13: error: unknown type name '__Uint32x4_t
     total_defs = dict_union(common_defs, {
         "@FOLLY_USE_LIBSTDCPP@": "1",
         "@FOLLY_USE_LIBCPP@": "0",
+        "@FOLLY_HAVE_EXTRANDOM_SFMT19937@": "0",
         "@FOLLY_LIBRARY_SANITIZE_ADDRESS@": "0",
         "@FOLLY_HAVE_LIBSNAPPY@": "1",
         "@FOLLY_HAVE_LIBZ@": "1",
