@@ -47,3 +47,13 @@ cc_test(
         "@folly",
     ],
 )
+
+cc_test(
+    name = "random_test",
+    size = "small",
+    srcs = ["random_test.cc"],
+    deps = [
+        "@com_google_googletest//:gtest_main",
+        "@folly",
+    ],
+)

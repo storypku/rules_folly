@@ -15,9 +15,9 @@
  */
 
 #include "folly/Fingerprint.h"
-#include "glog/logging.h"
 
 #include "folly/detail/SlowFingerprint.h"
+#include "glog/logging.h"
 #include "gtest/gtest.h"
 
 using namespace folly;
@@ -62,11 +62,11 @@ TEST(Fingerprint, MultiByteUpdate) {
   }
   StringPiece sp((const char*)bytes, 16);
 
-  uint64_t u8[2]; // updating 8 bits at a time
-  uint64_t u32[2]; // updating 32 bits at a time
-  uint64_t u64[2]; // updating 64 bits at a time
-  uint64_t usp[2]; // update(StringPiece)
-  uint64_t uconv[2]; // convenience function (fingerprint*(StringPiece))
+  uint64_t u8[2];     // updating 8 bits at a time
+  uint64_t u32[2];    // updating 32 bits at a time
+  uint64_t u64[2];    // updating 64 bits at a time
+  uint64_t usp[2];    // update(StringPiece)
+  uint64_t uconv[2];  // convenience function (fingerprint*(StringPiece))
 
   {
     Fingerprint<64> fp;
