@@ -24,10 +24,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "rules_folly",
-    sha256 = "dd5eb2822184c17f0666dde3b0e638b4dcb4042699389449db01181f4e6853d7",
-    strip_prefix = "rules_folly-0.0.2",
+    sha256 = "317abac1c970ad0af43c88b6eac706c9b4c5a06ee8b673d0e352143b0d9fd481",
+    strip_prefix = "rules_folly-0.0.3",
     urls = [
-        "https://github.com/storypku/rules_folly/archive/v0.0.2.tar.gz",
+        "https://github.com/storypku/rules_folly/archive/v0.0.3.tar.gz",
     ],
 )
 
