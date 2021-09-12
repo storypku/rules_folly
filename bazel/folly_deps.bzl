@@ -126,6 +126,17 @@ def folly_deps(syslibs = False):
         build_file = "@rules_folly//third_party/syslibs:openssl.BUILD",
     )
 
+    gtest_version = "1.11.0"
+    maybe(
+        http_archive,
+        name = "com_google_googletest",
+        sha256 = "b4870bf121ff7795ba20d20bcdd8627b8e088f2d1dab299a031c1034eddc93d5",
+        strip_prefix = "googletest-release-{}".format(gtest_version),
+        urls = [
+            "https://github.com/google/googletest/archive/refs/tags/release-{}.tar.gz".format(gtest_version),
+        ],
+    )
+
     # NOTE(storypku): The following failed with error:
     # external/folly/folly/ssl/OpenSSLVersionFinder.h:29:26:
     # error: 'OPENSSL_VERSION' was not declared in this scope
@@ -137,7 +148,6 @@ def folly_deps(syslibs = False):
     #    strip_prefix = "boringssl-b3d98af9c80643b0a36d495693cc0e669181c0af",
     #    urls = ["https://github.com/google/boringssl/archive/b3d98af9c80643b0a36d495693cc0e669181c0af.tar.gz"],
     # )
-
     # TODO(storypku): Ref: https://github.com/google/glog/blob/master/bazel/glog.bzl
     folly_version = "2021.09.06.00"
     http_archive(

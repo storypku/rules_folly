@@ -37,7 +37,8 @@ def folly_library(
         with_unwind = False,
         with_dwarf = False,
         with_libaio = False,
-        with_liburing = False):
+        with_liburing = False,
+        enable_testing = False):
     # Exclude tests, benchmarks, and other standalone utility executables from the
     # library sources.  Test sources are listed separately below.
     common_excludes = [
@@ -255,29 +256,31 @@ def folly_library(
         tools = ["@rules_folly//bazel:strip_config_h.sh"],
     )
 
+    common_copts = [
+        "-std=gnu++1z",
+        "-fPIC",
+        "-finput-charset=UTF-8",
+        "-fsigned-char",
+        "-fopenmp",
+        "-faligned-new",
+        "-Wall",
+        "-Wno-deprecated",
+        "-Wno-deprecated-declarations",
+        "-Wno-sign-compare",
+        "-Wno-unused",
+        "-Wunused-label",
+        "-Wunused-result",
+        "-Wshadow-compatible-local",
+        "-Wno-noexcept-type",
+    ]
+
     # CHECK_CXX_COMPILER_FLAG(-mpclmul COMPILER_HAS_M_PCLMUL)
     cc_library(
         name = "folly",
         hdrs = ["folly_config_h"] +
                native.glob(hdrs, exclude = common_excludes + hdrs_excludes),
         srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes),
-        copts = [
-            "-std=gnu++1z",
-            "-fPIC",
-            "-finput-charset=UTF-8",
-            "-fsigned-char",
-            "-fopenmp",
-            "-faligned-new",
-            "-Wall",
-            "-Wno-deprecated",
-            "-Wno-deprecated-declarations",
-            "-Wno-sign-compare",
-            "-Wno-unused",
-            "-Wunused-label",
-            "-Wunused-result",
-            "-Wshadow-compatible-local",
-            "-Wno-noexcept-type",
-        ] + select({
+        copts = common_copts + select({
             ":linux_x86_64": ["-mpclmul"],
             "//conditions:default": [],
         }),
@@ -324,3 +327,64 @@ def folly_library(
             "@openssl//:ssl",
         ],
     )
+
+    cc_library(
+        name = "follybenchmark",
+        srcs = ["folly/Benchmark.cpp"],
+        deps = [
+            ":folly",
+        ],
+        copts = common_copts,
+    )
+
+    if enable_testing == True:
+        cc_library(
+            name = "folly_test_support",
+            srcs = [
+                "folly/test/common/TestMain.cpp",
+                "folly/test/FBVectorTestUtil.cpp",
+                "folly/test/DeterministicSchedule.cpp",
+                "folly/test/SingletonTestStructs.cpp",
+                "folly/test/SocketAddressTestHelper.cpp",
+                "folly/experimental/test/CodingTestUtils.cpp",
+                "folly/futures/test/TestExecutor.cpp",
+                "folly/io/async/test/ScopedBoundPort.cpp",
+                "folly/io/async/test/SocketPair.cpp",
+                "folly/logging/test/ConfigHelpers.cpp",
+                "folly/logging/test/TestLogHandler.cpp",
+                "folly/io/async/test/SSLUtil.cpp",
+                "folly/io/async/test/TestSSLServer.cpp",
+                "folly/io/async/test/TimeUtil.cpp",
+            ],
+            hdrs = [
+                "folly/test/FBVectorTestUtil.h",
+                "folly/test/DeterministicSchedule.h",
+                "folly/test/SingletonTestStructs.h",
+                "folly/test/SocketAddressTestHelper.h",
+                "folly/container/test/F14TestUtil.h",
+                "folly/container/test/TrackingTypes.h",
+                "folly/experimental/test/CodingTestUtils.h",
+                "folly/futures/test/TestExecutor.h",
+                "folly/io/async/test/BlockingSocket.h",
+                "folly/io/async/test/MockAsyncServerSocket.h",
+                "folly/io/async/test/MockAsyncSocket.h",
+                "folly/io/async/test/MockAsyncSSLSocket.h",
+                "folly/io/async/test/MockAsyncTransport.h",
+                "folly/io/async/test/MockAsyncUDPSocket.h",
+                "folly/io/async/test/MockTimeoutManager.h",
+                "folly/io/async/test/ScopedBoundPort.h",
+                "folly/io/async/test/SocketPair.h",
+                "folly/io/async/test/SSLUtil.h",
+                "folly/io/async/test/TestSSLServer.h",
+                "folly/io/async/test/TimeUtil.h",
+                "folly/io/async/test/UndelayedDestruction.h",
+                "folly/io/async/test/Util.h",
+                "folly/logging/test/ConfigHelpers.h",
+                "folly/logging/test/TestLogHandler.h",
+            ],
+            deps = [
+                ":follybenchmark",
+                "@com_github_google_glog//:glog",
+                "@com_google_googletest//:gtest",
+            ],
+        )
