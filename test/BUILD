@@ -57,3 +57,22 @@ cc_test(
         "@folly",
     ],
 )
+
+# Enable this if enable_testing is True
+# cc_test(
+#     name = "small_vector_test",
+#     size = "small",
+#     srcs = ["small_vector_test.cc"],
+#     deps = [
+#         "@com_google_googletest//:gtest_main",
+#         "@folly//:folly_test_support",
+#     ],
+# )
+cc_test(
+    name = "random_bm",
+    size = "small",
+    srcs = ["random_bm.cc"],
+    deps = [
+        "@folly//:follybenchmark",
+    ],
+)

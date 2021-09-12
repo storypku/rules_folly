@@ -154,6 +154,7 @@ def folly_deps(syslibs = False):
         name = "folly",
         build_file = "@rules_folly//third_party/folly:folly.BUILD",
         strip_prefix = "folly-{}".format(folly_version),
+        sha256 = "8fb0a5392cbf6da1233c59933fff880dd77bbe61e0e2d578347ff436c776eda5",
         urls = [
             "https://github.com/facebook/folly/archive/v{}.tar.gz".format(folly_version),
         ],

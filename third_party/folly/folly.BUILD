@@ -20,4 +20,4 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
-folly_library(enable_testing = True)
+folly_library()
