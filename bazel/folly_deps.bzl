@@ -158,4 +158,8 @@ def folly_deps(syslibs = False):
         urls = [
             "https://github.com/facebook/folly/archive/v{}.tar.gz".format(folly_version),
         ],
+        patch_args = ["-p1"],
+        patches = [
+            "@rules_folly//third_party/folly:p00_double_conversion_include_fix.patch",
+        ],
     )
