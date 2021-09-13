@@ -10,11 +10,7 @@ sudo apt-get update \
     autoconf \
     automake \
     libtool \
-    libboost-all-dev \
-    libevent-dev \
-    libdouble-conversion-dev \
     libssl-dev
-    # libsnappy-dev
 ```
 
 ## How To Use
