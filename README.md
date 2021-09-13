@@ -29,12 +29,10 @@ http_archive(
     ],
 )
 
-load("//bazel:folly_deps.bzl", "folly_deps")
-
+load("@rules_folly//bazel:folly_deps.bzl", "folly_deps")
 folly_deps()
 
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
-
 boost_deps()
 ```
 
@@ -49,5 +47,5 @@ Then you can add Folly in the `deps` section of target rule in the `BUILD` file:
 ```
 
 ## ROADMAP
-1. Make it work for latest Folly
+1. Make it work for recent enough Folly
 2. Make it configurable, e.g., whether openssl/boringssl should be used, if glog was with gflags support, etc.
