@@ -15,7 +15,7 @@ sudo apt-get update \
 
 ## How To Use
 
-In your `WORKSPACE` file, add the following:
+1. In your `WORKSPACE` file, add the following:
 
 ```
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -36,7 +36,14 @@ load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 boost_deps()
 ```
 
-Then you can add Folly in the `deps` section of target rule in the `BUILD` file:
+If you would like to use Folly without gflags, instead you should change the line
+`folly_deps()` to:
+
+```
+folly_deps(with_gflags = 0)
+```
+
+2. Then you can add Folly in the `deps` section of target rule in the `BUILD` file:
 
 ```
   deps = [
@@ -47,5 +54,6 @@ Then you can add Folly in the `deps` section of target rule in the `BUILD` file:
 ```
 
 ## ROADMAP
-1. Make it work for recent enough Folly
-2. Make it configurable, e.g., whether openssl/boringssl should be used, if glog was with gflags support, etc.
+1. (Done) Make it work for recent versions of Folly
+2. (Done) Make rules_folly configurable, e.g., whether openssl/boringssl should be used,
+    if glog was with gflags support, etc.

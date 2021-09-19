@@ -3,7 +3,7 @@ workspace(name = "com_github_storypku_rules_folly")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//bazel:folly_deps.bzl", "folly_deps")
 
-folly_deps()
+folly_deps(with_gflags = 1)
 
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 

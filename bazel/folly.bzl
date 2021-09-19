@@ -2,7 +2,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 # Ref: https://github.com/google/glog/blob/v0.5.0/bazel/glog.bzl
-def expand_template_impl(ctx):
+def _expand_template_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file.template,
         output = ctx.outputs.out,
@@ -10,7 +10,7 @@ def expand_template_impl(ctx):
     )
 
 expand_template = rule(
-    implementation = expand_template_impl,
+    implementation = _expand_template_impl,
     attrs = {
         "template": attr.label(mandatory = True, allow_single_file = True),
         "substitutions": attr.string_dict(mandatory = True),
@@ -18,27 +18,24 @@ expand_template = rule(
     },
 )
 
-def dict_union(x, y):
+def _dict_union(x, y):
     z = {}
     z.update(x)
     z.update(y)
     return z
 
-def _val(predicate):
-    return "1" if predicate else "0"
-
 def folly_library(
-        with_gflags = True,
-        with_jemalloc = False,
-        with_bz2 = False,
-        with_lzma = False,
-        with_lz4 = False,
-        with_zstd = False,
-        with_unwind = False,
-        with_dwarf = False,
-        with_libaio = False,
-        with_liburing = False,
-        enable_testing = False):
+        with_gflags = 1,
+        with_jemalloc = 0,
+        with_bz2 = 0,
+        with_lzma = 0,
+        with_lz4 = 0,
+        with_zstd = 0,
+        with_unwind = 0,
+        with_dwarf = 0,
+        with_libaio = 0,
+        with_liburing = 0,
+        enable_testing = 0):
     # Exclude tests, benchmarks, and other standalone utility executables from the
     # library sources.  Test sources are listed separately below.
     common_excludes = [
@@ -122,7 +119,7 @@ def folly_library(
         "folly/experimental/crypto/LtHash.cpp",
     ]
 
-    if with_libaio == False:
+    if with_libaio == 0:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/io/AsyncIO.h",
         ]
@@ -130,7 +127,7 @@ def folly_library(
             "folly/experimental/io/AsyncIO.cpp",
         ]
 
-    if with_liburing == False:
+    if with_liburing == 0:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/io/IoUring.h",
             "folly/experimental/io/IoUringBackend.h",
@@ -139,7 +136,7 @@ def folly_library(
             "folly/experimental/io/IoUring.cpp",
             "folly/experimental/io/IoUringBackend.cpp",
         ]
-    if with_libaio == False and with_liburing == False:
+    if with_libaio == 0 and with_liburing == 0:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/io/AsyncBase.h",
             "folly/experimental/io/PollIoBackend.h",
@@ -161,7 +158,7 @@ def folly_library(
     # for my_src in my_srcs:
     #    print(my_src)
     # print("===== SRCS END =====")
-    if with_gflags == False:
+    if with_gflags == 0:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/NestedCommandLineApp.h",
             "folly/experimental/ProgramOptions.h",
@@ -201,22 +198,22 @@ def folly_library(
     }
 
     # Note(storypku):
-    total_defs = dict_union(common_defs, {
+    total_defs = _dict_union(common_defs, {
         "@FOLLY_USE_LIBSTDCPP@": "1",
         "@FOLLY_USE_LIBCPP@": "0",
-        "@FOLLY_HAVE_LIBGFLAGS@": _val(with_gflags),
+        "@FOLLY_HAVE_LIBGFLAGS@": str(with_gflags),
         "@FOLLY_UNUSUAL_GFLAGS_NAMESPACE@": "0",
         "@FOLLY_GFLAGS_NAMESPACE@": "gflags",
         "@FOLLY_HAVE_LIBGLOG@": "1",
-        "@FOLLY_HAVE_LIBLZ4@": _val(with_lz4),
-        "@FOLLY_HAVE_LIBLZMA@": _val(with_lzma),
+        "@FOLLY_HAVE_LIBLZ4@": str(with_lz4),
+        "@FOLLY_HAVE_LIBLZMA@": str(with_lzma),
         "@FOLLY_HAVE_LIBSNAPPY@": "0",
         "@FOLLY_HAVE_LIBZ@": "1",
-        "@FOLLY_HAVE_LIBZSTD@": _val(with_zstd),
-        "@FOLLY_HAVE_LIBBZ2@": _val(with_bz2),
-        "@FOLLY_USE_JEMALLOC@": _val(with_jemalloc),
-        "@FOLLY_HAVE_LIBUNWIND@": _val(with_unwind),
-        "@FOLLY_HAVE_DWARF@": _val(with_dwarf),
+        "@FOLLY_HAVE_LIBZSTD@": str(with_zstd),
+        "@FOLLY_HAVE_LIBBZ2@": str(with_bz2),
+        "@FOLLY_USE_JEMALLOC@": str(with_jemalloc),
+        "@FOLLY_HAVE_LIBUNWIND@": str(with_unwind),
+        "@FOLLY_HAVE_DWARF@": str(with_dwarf),
         "@FOLLY_HAVE_ELF@": "1",
         "@FOLLY_HAVE_SWAPCONTEXT@": "1",
         "@FOLLY_HAVE_BACKTRACE@": "1",
@@ -338,7 +335,7 @@ def folly_library(
         copts = common_copts,
     )
 
-    if enable_testing == True:
+    if enable_testing:
         cc_library(
             name = "folly_test_support",
             srcs = [
