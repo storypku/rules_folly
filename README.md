@@ -22,14 +22,14 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "com_github_storypku_rules_folly",
-    sha256 = "d9e6d0874eea008840c20331e8df4e89d2bd2d4d4452688b1ef06a621f91f6d1",
-    strip_prefix = "rules_folly-0.1.0",
+    sha256 = "0e7f10b6ac587a34e8318b9530b7835e99df4b6ae48af46074f24556e7a658ea",
+    strip_prefix = "rules_folly-0.1.1",
     urls = [
-        "https://github.com/storypku/rules_folly/archive/v0.1.0.tar.gz",
+        "https://github.com/storypku/rules_folly/archive/v0.1.1.tar.gz",
     ],
 )
 
-load("@com_github_rules_folly//bazel:folly_deps.bzl", "folly_deps")
+load("@com_github_storypku_rules_folly//bazel:folly_deps.bzl", "folly_deps")
 folly_deps()
 
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
