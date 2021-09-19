@@ -281,7 +281,7 @@ def folly_library(
                native.glob(hdrs, exclude = common_excludes + hdrs_excludes),
         srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes),
         copts = common_copts + select({
-            ":linux_x86_64": ["-mpclmul"],
+            "@com_github_storypku_rules_folly//bazel:linux_x86_64": ["-mpclmul"],
             "//conditions:default": [],
         }),
         includes = ["."],
@@ -318,14 +318,15 @@ def folly_library(
             "@boost//:type_traits",
             "@boost//:utility",
             "@boost//:variant",
-            "@com_github_gflags_gflags//:gflags",
             "@com_github_google_glog//:glog",
             "@com_github_google_snappy//:snappy",
             "@com_github_libevent_libevent//:libevent",
             "@com_github_fmtlib_fmt//:fmt",
             "@double-conversion//:double-conversion",
             "@openssl//:ssl",
-        ],
+        ] + ([
+            "@com_github_gflags_gflags//:gflags",
+        ] if with_gflags else []),
     )
 
     cc_library(

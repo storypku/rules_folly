@@ -80,7 +80,6 @@ BENCHMARK(Random64Num) { doNotOptimizeAway(Random::rand64(100ull << 32)); }
 BENCHMARK(Random64OneIn) { doNotOptimizeAway(Random::oneIn(100)); }
 
 int main(int argc, char** argv) {
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
   folly::runBenchmarks();
   return 0;
 }

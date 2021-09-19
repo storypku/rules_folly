@@ -1,21 +1,26 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-def folly_deps(syslibs = False):
-    maybe(
-        http_archive,
-        name = "com_github_gflags_gflags",
-        sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
-        strip_prefix = "gflags-2.2.2",
-        urls = [
-            "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz",
-        ],
-    )
+def folly_deps(with_gflags = True, syslibs = False):
+    if with_gflags:
+        maybe(
+            http_archive,
+            name = "com_github_gflags_gflags",
+            sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
+            strip_prefix = "gflags-2.2.2",
+            urls = [
+                "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz",
+            ],
+        )
 
     maybe(
         http_archive,
         name = "com_github_google_glog",
         strip_prefix = "glog-0.5.0",
+        build_file_content = """
+load(":bazel/glog.bzl", "glog_library")
+glog_library(with_gflags = {})
+""".format(1 if with_gflags else 0),
         sha256 = "eede71f28371bf39aa69b45de23b329d37214016e2055269b3b5e7cfd40b59f5",
         urls = [
             "https://github.com/google/glog/archive/v0.5.0.tar.gz",
@@ -152,7 +157,12 @@ def folly_deps(syslibs = False):
     folly_version = "2021.09.06.00"
     http_archive(
         name = "folly",
-        build_file = "@com_github_storypku_rules_folly//third_party/folly:folly.BUILD",
+        # build_file = "@com_github_storypku_rules_folly//third_party/folly:folly.BUILD",
+        build_file_content = """
+load("@com_github_storypku_rules_folly//bazel:folly.bzl", "folly_library")
+package(default_visibility = ["//visibility:public"])
+folly_library(with_gflags = {})
+""".format(with_gflags),
         strip_prefix = "folly-{}".format(folly_version),
         sha256 = "8fb0a5392cbf6da1233c59933fff880dd77bbe61e0e2d578347ff436c776eda5",
         urls = [
