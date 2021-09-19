@@ -36,7 +36,7 @@ load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 boost_deps()
 ```
 
-If you would like to use Folly without gflags, instead you should change the line
+If you would like to use Folly without gflags, you should change the line
 `folly_deps()` to:
 
 ```
