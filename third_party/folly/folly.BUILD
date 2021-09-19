@@ -1,4 +1,4 @@
-load("@rules_folly//bazel:folly.bzl", "folly_library")
+load("@com_github_storypku_rules_folly//bazel:folly.bzl", "folly_library")
 
 package(default_visibility = ["//visibility:public"])
 

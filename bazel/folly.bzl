@@ -233,8 +233,8 @@ def folly_library(
         outs = [
             "folly/folly-config.h.in",
         ],
-        cmd = "$(location @rules_folly//bazel:generate_config_in.sh) < $< > $@",
-        tools = ["@rules_folly//bazel:generate_config_in.sh"],
+        cmd = "$(location @com_github_storypku_rules_folly//bazel:generate_config_in.sh) < $< > $@",
+        tools = ["@com_github_storypku_rules_folly//bazel:generate_config_in.sh"],
     )
 
     expand_template(
@@ -252,8 +252,8 @@ def folly_library(
         outs = [
             "folly/folly-config.h",
         ],
-        cmd = "$(location @rules_folly//bazel:strip_config_h.sh) < $< > $@",
-        tools = ["@rules_folly//bazel:strip_config_h.sh"],
+        cmd = "$(location @com_github_storypku_rules_folly//bazel:strip_config_h.sh) < $< > $@",
+        tools = ["@com_github_storypku_rules_folly//bazel:strip_config_h.sh"],
     )
 
     common_copts = [

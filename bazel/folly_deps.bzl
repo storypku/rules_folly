@@ -27,7 +27,7 @@ def folly_deps(syslibs = False):
             native.new_local_repository,
             name = "double-conversion",
             path = "/usr/include",
-            build_file = "@rules_folly//third_party/syslibs:double-conversion.BUILD",
+            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:double-conversion.BUILD",
         )
     else:
         maybe(
@@ -43,7 +43,7 @@ def folly_deps(syslibs = False):
             native.new_local_repository,
             name = "zlib",
             path = "/usr/include",
-            build_file = "@rules_folly//third_party/syslibs:zlib.BUILD",
+            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:zlib.BUILD",
         )
     else:
         maybe(
@@ -51,7 +51,7 @@ def folly_deps(syslibs = False):
             name = "zlib",
             sha256 = "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
             strip_prefix = "zlib-1.2.11",
-            build_file = "@rules_folly//third_party/zlib:zlib.BUILD",
+            build_file = "@com_github_storypku_rules_folly//third_party/zlib:zlib.BUILD",
             urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
         )
 
@@ -60,13 +60,13 @@ def folly_deps(syslibs = False):
             native.new_local_repository,
             name = "com_github_google_snappy",
             path = "/usr/include",
-            build_file = "@rules_folly//third_party/syslibs:snappy.BUILD",
+            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:snappy.BUILD",
         )
     else:
         maybe(
             http_archive,
             name = "com_github_google_snappy",
-            build_file = "@rules_folly//third_party/snappy:snappy.BUILD",
+            build_file = "@com_github_storypku_rules_folly//third_party/snappy:snappy.BUILD",
             strip_prefix = "snappy-1.1.9",
             sha256 = "75c1fbb3d618dd3a0483bff0e26d0a92b495bbe5059c8b4f1c962b478b6e06e7",
             urls = [
@@ -80,7 +80,7 @@ def folly_deps(syslibs = False):
             native.new_local_repository,
             name = "com_github_libevent_libevent",
             path = "/usr/include",
-            build_file = "@rules_folly//third_party/syslibs:libevent.BUILD",
+            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:libevent.BUILD",
         )
     else:
         maybe(
@@ -89,7 +89,7 @@ def folly_deps(syslibs = False):
             sha256 = "316ddb401745ac5d222d7c529ef1eada12f58f6376a66c1118eee803cb70f83d",
             urls = ["https://github.com/libevent/libevent/archive/release-2.1.8-stable.tar.gz"],
             strip_prefix = "libevent-release-2.1.8-stable",
-            build_file = "@rules_folly//third_party/libevent:libevent.BUILD",
+            build_file = "@com_github_storypku_rules_folly//third_party/libevent:libevent.BUILD",
         )
 
     maybe(
@@ -98,7 +98,7 @@ def folly_deps(syslibs = False):
         urls = ["https://github.com/fmtlib/fmt/archive/8.0.1.tar.gz"],
         sha256 = "b06ca3130158c625848f3fb7418f235155a4d389b2abc3a6245fb01cb0eb1e01",
         strip_prefix = "fmt-8.0.1",
-        build_file = "@rules_folly//third_party/fmtlib:fmtlib.BUILD",
+        build_file = "@com_github_storypku_rules_folly//third_party/fmtlib:fmtlib.BUILD",
     )
 
     # Note(jiaming):
@@ -123,7 +123,7 @@ def folly_deps(syslibs = False):
         native.new_local_repository,
         name = "openssl",
         path = "/usr/include",
-        build_file = "@rules_folly//third_party/syslibs:openssl.BUILD",
+        build_file = "@com_github_storypku_rules_folly//third_party/syslibs:openssl.BUILD",
     )
 
     gtest_version = "1.11.0"
@@ -152,7 +152,7 @@ def folly_deps(syslibs = False):
     folly_version = "2021.09.06.00"
     http_archive(
         name = "folly",
-        build_file = "@rules_folly//third_party/folly:folly.BUILD",
+        build_file = "@com_github_storypku_rules_folly//third_party/folly:folly.BUILD",
         strip_prefix = "folly-{}".format(folly_version),
         sha256 = "8fb0a5392cbf6da1233c59933fff880dd77bbe61e0e2d578347ff436c776eda5",
         urls = [
@@ -160,6 +160,6 @@ def folly_deps(syslibs = False):
         ],
         patch_args = ["-p1"],
         patches = [
-            "@rules_folly//third_party/folly:p00_double_conversion_include_fix.patch",
+            "@com_github_storypku_rules_folly//third_party/folly:p00_double_conversion_include_fix.patch",
         ],
     )
