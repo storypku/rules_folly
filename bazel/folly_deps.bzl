@@ -154,7 +154,7 @@ glog_library(with_gflags = {})
     #    urls = ["https://github.com/google/boringssl/archive/b3d98af9c80643b0a36d495693cc0e669181c0af.tar.gz"],
     # )
     # TODO(storypku): Ref: https://github.com/google/glog/blob/master/bazel/glog.bzl
-    folly_version = "2021.09.06.00"
+    folly_version = "2022.11.14.00"
     http_archive(
         name = "folly",
         # build_file = "@com_github_storypku_rules_folly//third_party/folly:folly.BUILD",
