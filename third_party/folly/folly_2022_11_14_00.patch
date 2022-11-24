@@ -1,0 +1,586 @@
+diff --git a/folly/Conv.h b/folly/Conv.h
+index 1407a69..ed05093 100644
+--- a/folly/Conv.h
++++ b/folly/Conv.h
+@@ -117,7 +117,7 @@
+ #include <type_traits>
+ #include <utility>
+ 
+-#include <double-conversion/double-conversion.h> // V8 JavaScript implementation
++#include "double-conversion/double-conversion.h" // V8 JavaScript implementation
+ 
+ #include <folly/CPortability.h>
+ #include <folly/Demangle.h>
+diff --git a/folly/Format.cpp b/folly/Format.cpp
+index f3d6aec..fe2f1a0 100644
+--- a/folly/Format.cpp
++++ b/folly/Format.cpp
+@@ -22,7 +22,7 @@
+ #include <folly/CppAttributes.h>
+ #include <folly/container/Array.h>
+ 
+-#include <double-conversion/double-conversion.h>
++#include "double-conversion/double-conversion.h"
+ 
+ namespace folly {
+ namespace detail {
+diff --git a/folly/io/async/AsyncSSLSocket.cpp b/folly/io/async/AsyncSSLSocket.cpp
+index 193c281..ba5af67 100644
+--- a/folly/io/async/AsyncSSLSocket.cpp
++++ b/folly/io/async/AsyncSSLSocket.cpp
+@@ -651,6 +651,7 @@ void AsyncSSLSocket::detachSSLContext() {
+   SSL_set_SSL_CTX(ssl_.get(), dummyCtx->getSSLCtx());
+ }
+ 
++#ifdef FOLLY_OPENSSL_HAS_SNI
+ #if FOLLY_OPENSSL_HAS_SNI
+ void AsyncSSLSocket::switchServerSSLContext(
+     const std::shared_ptr<SSLContext>& handshakeCtx) {
+@@ -677,10 +678,17 @@ bool AsyncSSLSocket::isServerNameMatch() const {
+     return false;
+   }
+ 
+-  SSL_SESSION* ss = SSL_get_session(ssl_.get());
++  #ifndef OPENSSL_IS_BORINGSSL
++    SSL_SESSION* ss = SSL_get_session(ssl_.get());
++    if (!ss) {
++      return false;
++    }
++  #else
++  const SSL* ss= ssl_.get();
+   if (!ss) {
+     return false;
+   }
++  #endif
+ 
+   auto tlsextHostname = SSL_SESSION_get0_hostname(ss);
+   return (tlsextHostname && !tlsextHostname_.compare(tlsextHostname));
+@@ -691,6 +699,7 @@ void AsyncSSLSocket::setServerName(std::string serverName) noexcept {
+ }
+ 
+ #endif // FOLLY_OPENSSL_HAS_SNI
++#endif // ifdef FOLLY_OPENSSL_HAS_SNI
+ 
+ void AsyncSSLSocket::timeoutExpired(
+     std::chrono::milliseconds timeout) noexcept {
+@@ -1296,6 +1305,7 @@ void AsyncSSLSocket::handleAccept() noexcept {
+ }
+ 
+ const char* AsyncSSLSocket::getNegotiatedGroup() const {
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+   auto nid = SSL_get_shared_group(const_cast<SSL*>(this->getSSL()), 0);
+   const char* longname = OBJ_nid2ln((int)nid);
+@@ -1303,6 +1313,7 @@ const char* AsyncSSLSocket::getNegotiatedGroup() const {
+ #else
+   return nullptr;
+ #endif
++#endif
+ }
+ 
+ void AsyncSSLSocket::handleReturnFromSSLAccept(int ret) {
+diff --git a/folly/io/async/AsyncSSLSocket.h b/folly/io/async/AsyncSSLSocket.h
+index 34793eb..765917e 100644
+--- a/folly/io/async/AsyncSSLSocket.h
++++ b/folly/io/async/AsyncSSLSocket.h
+@@ -1001,8 +1001,8 @@ class AsyncSSLSocket : public AsyncSocket {
+ 
+ #if FOLLY_OPENSSL_HAS_SNI
+   std::shared_ptr<folly::SSLContext> handshakeCtx_;
+-  std::string tlsextHostname_;
+ #endif
++  std::string tlsextHostname_;
+ 
+   // a key that can be used for caching the established session
+   std::string sessionKey_;
+diff --git a/folly/io/async/AsyncSocket.h b/folly/io/async/AsyncSocket.h
+index 2188a95..bcbfe70 100644
+--- a/folly/io/async/AsyncSocket.h
++++ b/folly/io/async/AsyncSocket.h
+@@ -21,6 +21,7 @@
+ #include <chrono>
+ #include <map>
+ #include <memory>
++#include <time.h>
+ 
+ #include <folly/ConstructorCallbackList.h>
+ #include <folly/Optional.h>
+@@ -1640,4 +1641,8 @@ class AsyncSocket : public AsyncSocketTransport {
+   ConstructorCallbackList<AsyncSocket> constructorCallbackList_{this};
+ };
+ 
++struct scm_timestamping{
++  struct timespec ts[3];
++};
++
+ } // namespace folly
+diff --git a/folly/io/async/SSLContext.cpp b/folly/io/async/SSLContext.cpp
+index b647f66..7c31eea 100644
+--- a/folly/io/async/SSLContext.cpp
++++ b/folly/io/async/SSLContext.cpp
+@@ -43,6 +43,7 @@ int getExDataIndex() {
+  * Configure the given SSL context to use the given version.
+  */
+ void configureProtocolVersion(SSL_CTX* ctx, SSLContext::SSLVersion version) {
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 0)
+   // Disable TLS 1.3 by default, for now, if this version of OpenSSL
+   // supports it. There are some semantic differences (e.g. assumptions
+@@ -102,6 +103,7 @@ void configureProtocolVersion(SSL_CTX* ctx, SSLContext::SSLVersion version) {
+   int newOpt = SSL_CTX_set_options(ctx, opt);
+   DCHECK((newOpt & opt) == opt);
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 0)
++#endif // if defined(FOLLY_OPENSSL_PREREQ)
+ }
+ 
+ static int dispatchTicketCrypto(
+@@ -197,6 +199,7 @@ void SSLContext::setSupportedGroups(const std::vector<std::string>& groups) {
+   if (groups.empty()) {
+     return;
+   }
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+   std::string groupsList;
+   join(":", groups, groupsList);
+@@ -205,6 +208,7 @@ void SSLContext::setSupportedGroups(const std::vector<std::string>& groups) {
+     throw std::runtime_error("SSL_CTX_set1_curves " + getErrors());
+   }
+ #endif
++#endif
+ }
+ 
+ void SSLContext::setServerECCurve(const std::string& curveName) {
+@@ -833,15 +837,19 @@ std::string SSLContext::getErrors(int errnoCopy) {
+ }
+ 
+ void SSLContext::enableTLS13() {
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 0)
+   SSL_CTX_set_max_proto_version(ctx_, 0);
+ #endif
++#endif
+ }
+ 
+ void SSLContext::disableTLS13() {
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 0)
+   SSL_CTX_set_max_proto_version(ctx_, TLS1_2_VERSION);
+ #endif
++#endif
+ }
+ 
+ void SSLContext::setupCtx(SSL_CTX* ctx) {
+@@ -901,6 +909,7 @@ void SSLContext::setSessionLifecycleCallbacks(
+   sessionLifecycleCallbacks_ = std::move(cb);
+ }
+ 
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+ void SSLContext::setCiphersuitesOrThrow(const std::string& ciphersuites) {
+   auto rc = SSL_CTX_set_ciphersuites(ctx_, ciphersuites.c_str());
+@@ -918,6 +927,7 @@ void SSLContext::setAllowNoDheKex(bool flag) {
+   }
+ }
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+ 
+ void SSLContext::setTicketHandler(
+     std::unique_ptr<OpenSSLTicketHandler> handler) {
+diff --git a/folly/io/async/SSLContext.h b/folly/io/async/SSLContext.h
+index 2e7b5aa..b5e8766 100644
+--- a/folly/io/async/SSLContext.h
++++ b/folly/io/async/SSLContext.h
+@@ -662,6 +662,7 @@ class SSLContext {
+   void setSessionLifecycleCallbacks(
+       std::unique_ptr<SessionLifecycleCallbacks> cb);
+ 
++#ifdef FOLLY_OPENSSL_PREREQ
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+   /**
+    * Set the TLS 1.3 ciphersuites to be used in the SSL handshake, in
+@@ -677,6 +678,7 @@ class SSLContext {
+    */
+   void setAllowNoDheKex(bool flag);
+ #endif
++#endif // ifdef(FOLLY_OPENSSL_PREREQ)
+ 
+   [[deprecated("Use folly::ssl::init")]] static void initializeOpenSSL();
+ 
+diff --git a/folly/io/async/SSLOptions.h b/folly/io/async/SSLOptions.h
+index 3998fe4..4651958 100644
+--- a/folly/io/async/SSLOptions.h
++++ b/folly/io/async/SSLOptions.h
+@@ -69,22 +69,29 @@ struct SSLOptionsCompatibility {
+    */
+   static constexpr auto sigalgs() {
+     return folly::make_array(
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+         "rsa_pss_pss_sha512",
+         "rsa_pss_rsae_sha512",
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+         "RSA+SHA512",
+         "ECDSA+SHA512",
++
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+         "rsa_pss_pss_sha384",
+         "rsa_pss_rsae_sha384",
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+         "RSA+SHA384",
+         "ECDSA+SHA384",
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+         "rsa_pss_pss_sha256",
+         "rsa_pss_rsae_sha256",
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+         "RSA+SHA256",
+         "ECDSA+SHA256",
+         "RSA+SHA1",
+@@ -171,22 +178,28 @@ struct SSLOptions2021 {
+ 
+   static constexpr auto sigalgs() {
+     return folly::make_array(
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+         "rsa_pss_pss_sha512",
+         "rsa_pss_rsae_sha512",
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+         "RSA+SHA512",
+         "ECDSA+SHA512",
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+         "rsa_pss_pss_sha384",
+         "rsa_pss_rsae_sha384",
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+         "RSA+SHA384",
+         "ECDSA+SHA384",
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+         "rsa_pss_pss_sha256",
+         "rsa_pss_rsae_sha256",
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+         "RSA+SHA256",
+         "ECDSA+SHA256");
+   }
+@@ -203,11 +216,13 @@ using SSLServerOptions = SSLServerOptionsCompatibility;
+ template <typename TSSLOptions>
+ void setCipherSuites(SSLContext& ctx) {
+   try {
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+     std::string ciphersuites;
+     folly::join(':', TSSLOptions::ciphersuites(), ciphersuites);
+     ctx.setCiphersuitesOrThrow(std::move(ciphersuites));
+ #endif
++#endif
+     ctx.setCipherList(TSSLOptions::ciphers());
+   } catch (std::runtime_error const& e) {
+     ssl_options_detail::logDfatal(e);
+diff --git a/folly/io/async/ssl/OpenSSLUtils.cpp b/folly/io/async/ssl/OpenSSLUtils.cpp
+index f7b0b72..a28497f 100644
+--- a/folly/io/async/ssl/OpenSSLUtils.cpp
++++ b/folly/io/async/ssl/OpenSSLUtils.cpp
+@@ -24,6 +24,7 @@
+ #include <folly/ScopeGuard.h>
+ #include <folly/portability/Sockets.h>
+ #include <folly/portability/Unistd.h>
++#include <folly/portability/OpenSSL.h>
+ #include <folly/ssl/Init.h>
+ #include <folly/ssl/detail/OpenSSLSession.h>
+ 
+@@ -205,7 +206,7 @@ const std::string& OpenSSLUtils::getCipherName(uint16_t cipherCode) {
+ void OpenSSLUtils::setSSLInitialCtx(SSL* ssl, SSL_CTX* ctx) {
+   (void)ssl;
+   (void)ctx;
+-#if !FOLLY_OPENSSL_IS_110 && !defined(OPENSSL_NO_TLSEXT)
++#if !FOLLY_OPENSSL_IS_110 && !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_IS_BORINGSSL)
+   if (ssl) {
+     if (ctx) {
+       SSL_CTX_up_ref(ctx);
+@@ -217,7 +218,7 @@ void OpenSSLUtils::setSSLInitialCtx(SSL* ssl, SSL_CTX* ctx) {
+ 
+ SSL_CTX* OpenSSLUtils::getSSLInitialCtx(SSL* ssl) {
+   (void)ssl;
+-#if !FOLLY_OPENSSL_IS_110 && !defined(OPENSSL_NO_TLSEXT)
++#if !FOLLY_OPENSSL_IS_110 && !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_IS_BORINGSSL)
+   if (ssl) {
+     return ssl->initial_ctx;
+   }
+@@ -276,7 +277,8 @@ int OpenSSLUtils::getBioShouldRetryWrite(int r) {
+ 
+ void OpenSSLUtils::setBioAppData(BIO* b, void* ptr) {
+ #ifdef OPENSSL_IS_BORINGSSL
+-  BIO_set_callback_arg(b, static_cast<char*>(ptr));
++  // TODO(alexzhuang)
++  // BIO_callback_ctrl(b, BIO_CTRL_SET_CALLBACK, static_cast<long int *>(ptr))
+ #else
+   BIO_set_app_data(b, ptr);
+ #endif
+@@ -284,7 +286,9 @@ void OpenSSLUtils::setBioAppData(BIO* b, void* ptr) {
+ 
+ void* OpenSSLUtils::getBioAppData(BIO* b) {
+ #ifdef OPENSSL_IS_BORINGSSL
+-  return BIO_get_callback_arg(b);
++  return nullptr;
++  // TODO(alexzhuang)
++  // return BIO_callback_ctrl(b, BIO_CTRL_GET_CALLBACK)
+ #else
+   return BIO_get_app_data(b);
+ #endif
+diff --git a/folly/io/async/ssl/OpenSSLUtils.h b/folly/io/async/ssl/OpenSSLUtils.h
+index 1492d37..161cdc1 100644
+--- a/folly/io/async/ssl/OpenSSLUtils.h
++++ b/folly/io/async/ssl/OpenSSLUtils.h
+@@ -27,6 +27,10 @@
+ namespace folly {
+ namespace ssl {
+ 
++#ifndef ub_common_name 
++#define ub_common_name 64
++#endif
++
+ class OpenSSLUtils {
+  public:
+   /*
+diff --git a/folly/io/async/test/AsyncSSLSocketTest.cpp b/folly/io/async/test/AsyncSSLSocketTest.cpp
+index 02938c1..b7235eb 100644
+--- a/folly/io/async/test/AsyncSSLSocketTest.cpp
++++ b/folly/io/async/test/AsyncSSLSocketTest.cpp
+@@ -55,7 +55,7 @@
+ #endif
+ 
+ #if FOLLY_OPENSSL_IS_110
+-#include <openssl/async.h>
++#include "openssl/async.h"
+ #endif
+ 
+ using std::cerr;
+diff --git a/folly/io/async/test/SSLContextRegressionTest.cpp b/folly/io/async/test/SSLContextRegressionTest.cpp
+index 234796f..79dd8fc 100644
+--- a/folly/io/async/test/SSLContextRegressionTest.cpp
++++ b/folly/io/async/test/SSLContextRegressionTest.cpp
+@@ -27,6 +27,7 @@ using namespace folly::test;
+  */
+ // need OpenSSL version 1.1.1 for the SSL_CTX_get_min_proto_version function
+ // should reduce this prereq's scope if new tests are added that don't need it
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+ 
+ /*
+@@ -59,3 +60,4 @@ TEST_F(SSLContextRegressionTest, IsNotAffectedBySystemEnvironment) {
+   ASSERT_EQ(SSL_CTX_get_min_proto_version(ctx->getSSLCtx()), TLS1_VERSION);
+ }
+ #endif
++#endif
+diff --git a/folly/io/async/test/SSLContextTest.cpp b/folly/io/async/test/SSLContextTest.cpp
+index 3dc704a..69a8f1d 100644
+--- a/folly/io/async/test/SSLContextTest.cpp
++++ b/folly/io/async/test/SSLContextTest.cpp
+@@ -240,6 +240,7 @@ TEST_F(SSLContextTest, TestInvalidSigAlgThrows) {
+ }
+ #endif
+ 
++#if defined(FOLLY_OPENSSL_PREREQ)
+ #if FOLLY_OPENSSL_PREREQ(1, 1, 1)
+ TEST_F(SSLContextTest, TestSetCiphersuites) {
+   std::vector<std::string> ciphersuitesList{
+@@ -259,6 +260,7 @@ TEST_F(SSLContextTest, TestSetInvalidCiphersuite) {
+       std::runtime_error);
+ }
+ #endif // FOLLY_OPENSSL_PREREQ(1, 1, 1)
++#endif
+ 
+ TEST_F(SSLContextTest, TestTLS13MinVersionThrow) {
+   EXPECT_THROW(SSLContext{SSLContext::SSLVersion::TLSv1_3}, std::runtime_error);
+diff --git a/folly/portability/OpenSSL.cpp b/folly/portability/OpenSSL.cpp
+index c3161c4..7abcf52 100644
+--- a/folly/portability/OpenSSL.cpp
++++ b/folly/portability/OpenSSL.cpp
+@@ -18,12 +18,13 @@
+ #include <folly/ssl/detail/OpenSSLThreading.h>
+ 
+ #include <stdexcept>
++#include <string.h>
+ 
+ namespace folly {
+ namespace portability {
+ namespace ssl {
++#if !defined(OPENSSL_IS_BORINGSSL)
+ 
+-#ifdef OPENSSL_IS_BORINGSSL
+ int SSL_CTX_set1_sigalgs_list(SSL_CTX*, const char*) {
+   return 1; // 0 implies error
+ }
+@@ -34,7 +35,6 @@ int TLS1_get_client_version(SSL* s) {
+   // ClientHello (there is a callback via the SSL_HANDSHAKE struct)
+   return s->version;
+ }
+-#endif
+ 
+ #if FOLLY_OPENSSL_IS_100
+ uint32_t SSL_CIPHER_get_id(const SSL_CIPHER* c) {
+@@ -196,9 +196,6 @@ const SSL_METHOD* TLS_client_method(void) {
+   return TLSv1_2_client_method();
+ }
+ 
+-const char* SSL_SESSION_get0_hostname(const SSL_SESSION* s) {
+-  return s->tlsext_hostname;
+-}
+ 
+ unsigned char* ASN1_STRING_get0_data(const ASN1_STRING* x) {
+   return ASN1_STRING_data((ASN1_STRING*)x);
+@@ -334,6 +331,7 @@ EVP_MD_CTX* EVP_MD_CTX_new() {
+   return ctx;
+ }
+ 
++
+ void EVP_MD_CTX_free(EVP_MD_CTX* ctx) {
+   if (ctx) {
+     EVP_MD_CTX_cleanup(ctx);
+@@ -421,6 +419,11 @@ int ECDSA_SIG_set0(ECDSA_SIG* sig, BIGNUM* r, BIGNUM* s) {
+   return 1;
+ }
+ 
++
++const char* SSL_SESSION_get0_hostname(const SSL_SESSION* s) {
++  return s->tlsext_hostname;
++}
++
+ void ECDSA_SIG_get0(
+     const ECDSA_SIG* sig, const BIGNUM** pr, const BIGNUM** ps) {
+   // Based off of https://wiki.openssl.org/index.php/OpenSSL_1.1.0_Changes
+@@ -438,6 +441,7 @@ void ECDSA_SIG_get0(
+  * For now, options and settings are ignored. We implement the most common
+  * behavior, which is to add all digests, ciphers, and strings.
+  */
++#if !defined(OPENSSL_IS_BORINGSSL)
+ int OPENSSL_init_ssl(uint64_t, const OPENSSL_INIT_SETTINGS*) {
+   // OpenSSL >= 1.1.0 handles initializing the library, adding digests &
+   // ciphers, loading strings. Additionally, OpenSSL >= 1.1.0 uses platform
+@@ -464,6 +468,7 @@ void OPENSSL_cleanup() {
+   EVP_cleanup();
+   ERR_clear_error();
+ }
++#endif
+ 
+ const ASN1_INTEGER* X509_REVOKED_get0_serialNumber(const X509_REVOKED* r) {
+   return r->serialNumber;
+@@ -516,6 +521,8 @@ const X509_ALGOR* X509_get0_tbs_sigalg(const X509* x) {
+ }
+ 
+ #endif // !FOLLY_OPENSSL_IS_110
++#endif // if !defined(OPENSSL_IS_BORINGSSL)
++
+ } // namespace ssl
+ } // namespace portability
+ } // namespace folly
+diff --git a/folly/portability/OpenSSL.h b/folly/portability/OpenSSL.h
+index 28d5856..3d612d7 100644
+--- a/folly/portability/OpenSSL.h
++++ b/folly/portability/OpenSSL.h
+@@ -44,6 +44,7 @@
+ #include <openssl/tls1.h>
+ #include <openssl/x509.h>
+ #include <openssl/x509v3.h>
++#include <openssl/pem.h>
+ 
+ #ifndef OPENSSL_NO_EC
+ #include <openssl/ec.h>
+@@ -54,10 +55,11 @@
+ #include <openssl/ocsp.h>
+ #endif
+ 
++DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
+ // BoringSSL doesn't have notion of versioning although it defines
+ // OPENSSL_VERSION_NUMBER to maintain compatibility. The following variables are
+ // intended to be specific to OpenSSL.
+-#if !defined(OPENSSL_IS_BORINGSSL)
++#ifndef OPENSSL_IS_BORINGSSL
+ #define FOLLY_OPENSSL_IS_100                \
+   (OPENSSL_VERSION_NUMBER >= 0x10000003L && \
+    OPENSSL_VERSION_NUMBER < 0x1000105fL)
+@@ -94,7 +96,8 @@
+ // BoringSSL and OpenSSL 0.9.8f later with TLS extension support SNI.
+ #if defined(OPENSSL_IS_BORINGSSL) || \
+     (OPENSSL_VERSION_NUMBER >= 0x00908070L && !defined(OPENSSL_NO_TLSEXT))
+-#define FOLLY_OPENSSL_HAS_SNI 1
++// TODO(alexzhuang)
++#define FOLLY_OPENSSL_HAS_SNI 0
+ #else
+ #define FOLLY_OPENSSL_HAS_SNI 0
+ #endif
+@@ -156,6 +159,7 @@ namespace folly {
+ namespace portability {
+ namespace ssl {
+ 
++#if !defined(OPENSSL_IS_BORINGSSL)
+ #ifdef OPENSSL_IS_BORINGSSL
+ int SSL_CTX_set1_sigalgs_list(SSL_CTX* ctx, const char* sigalgs_list);
+ int TLS1_get_client_version(SSL* s);
+@@ -273,6 +277,9 @@ const X509_ALGOR* X509_get0_tbs_sigalg(const X509* x);
+ // indicates it isn't supported.
+ #define OPENSSL_NO_SSL2
+ #endif
++
++#endif
++
+ } // namespace ssl
+ } // namespace portability
+ } // namespace folly
+diff --git a/folly/ssl/OpenSSLPtrTypes.h b/folly/ssl/OpenSSLPtrTypes.h
+index 2b446f6..2bd8ffa 100644
+--- a/folly/ssl/OpenSSLPtrTypes.h
++++ b/folly/ssl/OpenSSLPtrTypes.h
+@@ -156,7 +156,31 @@ FOLLY_SSL_DETAIL_DEFINE_PTR_TYPE(OcspCertId, OCSP_CERTID, OCSP_CERTID_free);
+ // the appropriate destructor:
+ //    * OwningStackOf* -> Invokes sk_T_free
+ //    * BorrowingStackOf* -> Invokes sk_T_pop_free
+-#if FOLLY_OPENSSL_PREREQ(1, 1, 0)
++#if !defined(FOLLY_OPENSSL_PREREQ) 
++namespace detail {
++
++template <class ElementType, void (*ElementDestructor)(ElementType*)>
++struct OpenSSL102OwnedStackDestructor {
++  template <class T>
++  void operator()(T* stack) const {
++    sk_pop_free(
++        reinterpret_cast<_STACK*>(stack), ((void (*)(void*))ElementDestructor));
++  }
++};
++
++struct OpenSSL102BorrowedStackDestructor {
++  template <class T>
++  void operator()(T* stack) const {
++    sk_free(reinterpret_cast<_STACK*>(stack));
++  }
++};
++} // namespace detail
++#define FOLLY_SSL_DETAIL_OWNING_STACK_DESTRUCTOR(T) \
++  ::folly::ssl::detail::OpenSSL102OwnedStackDestructor<T, T##_free>
++#define FOLLY_SSL_DETAIL_BORROWING_STACK_DESTRUCTOR(T) \
++  ::folly::ssl::detail::OpenSSL102BorrowedStackDestructor
++
++#elif FOLLY_OPENSSL_PREREQ(1, 1, 0)
+ namespace detail {
+ template <
+     class StackType,
+diff --git a/folly/ssl/detail/OpenSSLThreading.cpp b/folly/ssl/detail/OpenSSLThreading.cpp
+index c54e53f..4bdf782 100644
+--- a/folly/ssl/detail/OpenSSLThreading.cpp
++++ b/folly/ssl/detail/OpenSSLThreading.cpp
+@@ -31,7 +31,7 @@
+ // clang-format off
+ #include <folly/portability/Windows.h>
+ // @lint-ignore CLANGTIDY
+-#include <openssl/crypto.h>
++#include "openssl/crypto.h"
+ // clang-format on
+ 
+ #if !defined(OPENSSL_IS_BORINGSSL)

@@ -4,5 +4,5 @@ package(
 
 exports_files([
     "folly-config.h",
-    "p00_double_conversion_include_fix.patch",
+    "folly_2022_11_14_00.patch",
 ])
