@@ -11,12 +11,12 @@ cc_library(
 )
 
 cc_library(
-    name = "libevent_openssl",
+    name = "libevent_boringssl",
     linkopts = [
-        "-levent_openssl",
+        "-levent_boringssl",
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "@openssl//:crypto",
+        "@boringssl//:crypto",
     ],
 )

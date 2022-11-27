@@ -33,8 +33,8 @@ def folly_library(
         with_zstd = 0,
         with_unwind = 0,
         with_dwarf = 0,
-        with_libaio = 0,
-        with_liburing = 0,
+        with_libaio = 1,
+        with_liburing = 1,
         enable_testing = 0):
     # Exclude tests, benchmarks, and other standalone utility executables from the
     # library sources.  Test sources are listed separately below.
@@ -42,6 +42,8 @@ def folly_library(
         "folly/build/**",
         "folly/logging/example/**",
         "folly/tools/**",
+        "folly/docs/**",
+
     ]
 
     hdrs = native.glob(["folly/**/*.h"], exclude = common_excludes + [
@@ -130,10 +132,12 @@ def folly_library(
     if with_liburing == 0:
         hdrs_excludes = hdrs_excludes + [
             "folly/experimental/io/IoUring.h",
+            "folly/experimental/io/IoUringEvent.h",
             "folly/experimental/io/IoUringBackend.h",
         ]
         srcs_excludes = srcs_excludes + [
             "folly/experimental/io/IoUring.cpp",
+            "folly/experimental/io/IoUringEvent.cpp",
             "folly/experimental/io/IoUringBackend.cpp",
         ]
     if with_libaio == 0 and with_liburing == 0:
@@ -320,7 +324,7 @@ def folly_library(
             "@com_github_libevent_libevent//:libevent",
             "@com_github_fmtlib_fmt//:fmt",
             "@double-conversion//:double-conversion",
-            "@openssl//:ssl",
+            "@boringssl//:ssl",
         ] + ([
             "@com_github_gflags_gflags//:gflags",
         ] if with_gflags else []),
@@ -384,5 +388,7 @@ def folly_library(
                 ":follybenchmark",
                 "@com_github_google_glog//:glog",
                 "@com_google_googletest//:gtest",
+                "@com_google_googletest//:gtest_main",
+                "@boringssl//:ssl",
             ],
         )

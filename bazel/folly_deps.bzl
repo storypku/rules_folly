@@ -124,13 +124,22 @@ glog_library(with_gflags = {})
         ],
     )
 
-    maybe(
-        native.new_local_repository,
-        name = "openssl",
-        path = "/usr/include",
-        build_file = "@com_github_storypku_rules_folly//third_party/syslibs:openssl.BUILD",
-    )
 
+     # maybe(
+     #     native.new_local_repository,
+     #     name = "openssl",
+     #     path = "/usr/include",
+     #     build_file = "@com_github_storypku_rules_folly//third_party/syslibs:openssl.BUILD",
+     # )
+    maybe(
+      http_archive,
+      name = "openssl",
+      strip_prefix = "openssl-openssl-3.0.6",
+      build_file = "@com_github_storypku_rules_folly//third_party/syslibs:openssl.BUILD",
+      urls = [
+        "https://github.com/openssl/openssl/archive/refs/tags/openssl-3.0.6.tar.gz",
+      ],
+    )
     gtest_version = "1.11.0"
     maybe(
         http_archive,
@@ -154,7 +163,7 @@ glog_library(with_gflags = {})
     #    urls = ["https://github.com/google/boringssl/archive/b3d98af9c80643b0a36d495693cc0e669181c0af.tar.gz"],
     # )
     # TODO(storypku): Ref: https://github.com/google/glog/blob/master/bazel/glog.bzl
-    folly_version = "2021.09.06.00"
+    folly_version = "2022.11.14.00"
     http_archive(
         name = "folly",
         # build_file = "@com_github_storypku_rules_folly//third_party/folly:folly.BUILD",
@@ -164,12 +173,20 @@ package(default_visibility = ["//visibility:public"])
 folly_library(with_gflags = {})
 """.format(with_gflags),
         strip_prefix = "folly-{}".format(folly_version),
-        sha256 = "8fb0a5392cbf6da1233c59933fff880dd77bbe61e0e2d578347ff436c776eda5",
+        # sha256 = "8fb0a5392cbf6da1233c59933fff880dd77bbe61e0e2d578347ff436c776eda5",
         urls = [
-            "https://github.com/facebook/folly/archive/v{}.tar.gz".format(folly_version),
+             "https://github.com/facebook/folly/archive/refs/tags/v{}.tar.gz".format(folly_version),
         ],
         patch_args = ["-p1"],
         patches = [
-            "@com_github_storypku_rules_folly//third_party/folly:p00_double_conversion_include_fix.patch",
+            "@com_github_storypku_rules_folly//third_party/folly:folly_2022_11_14_00.patch",
+        ],
+    )
+    http_archive(
+        name = "boringssl",
+        strip_prefix = "boringssl-main-with-bazel",
+        urls = [
+            "https://github.com/google/boringssl/archive/refs/heads/main-with-bazel.zip",
+            # "https://github.com/google/boringssl/archive/refs/heads/2272.zip",
         ],
     )
