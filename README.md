@@ -21,15 +21,14 @@ sudo apt-get update \
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    name = "com_github_storypku_rules_folly",
-    sha256 = "d213d3321faf8322e901f404f889c4ed4d0d17ebe456a081ede68e7c3433ab43",
-    strip_prefix = "rules_folly-0.1.1",
+    name = "com_github_zhuangAnjun_rules_folly",
+    strip_prefix = "rules_folly-1.0",
     urls = [
-        "https://github.com/storypku/rules_folly/archive/v0.1.1.tar.gz",
+        "https://github.com/zhuangAnjun/rules_folly/archive/refs/tags/1.0.tar.gz",
     ],
 )
 
-load("@com_github_storypku_rules_folly//bazel:folly_deps.bzl", "folly_deps")
+load("@com_github_zhuangAnjun_rules_folly//bazel:folly_deps.bzl", "folly_deps")
 folly_deps()
 
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
