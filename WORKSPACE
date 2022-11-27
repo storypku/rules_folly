@@ -1,1 +1,1 @@
-workspace(name = "com_github_storypku_rules_folly")
+workspace(name = "com_github_zhuangAnjun_rules_folly")

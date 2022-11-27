@@ -234,8 +234,8 @@ def folly_library(
         outs = [
             "folly/folly-config.h.in",
         ],
-        cmd = "$(location @com_github_storypku_rules_folly//bazel:generate_config_in.sh) < $< > $@",
-        tools = ["@com_github_storypku_rules_folly//bazel:generate_config_in.sh"],
+        cmd = "$(location @com_github_zhuangAnjun_rules_folly//bazel:generate_config_in.sh) < $< > $@",
+        tools = ["@com_github_zhuangAnjun_rules_folly//bazel:generate_config_in.sh"],
     )
 
     expand_template(
@@ -253,8 +253,8 @@ def folly_library(
         outs = [
             "folly/folly-config.h",
         ],
-        cmd = "$(location @com_github_storypku_rules_folly//bazel:strip_config_h.sh) < $< > $@",
-        tools = ["@com_github_storypku_rules_folly//bazel:strip_config_h.sh"],
+        cmd = "$(location @com_github_zhuangAnjun_rules_folly//bazel:strip_config_h.sh) < $< > $@",
+        tools = ["@com_github_zhuangAnjun_rules_folly//bazel:strip_config_h.sh"],
     )
 
     common_copts = [
@@ -282,7 +282,7 @@ def folly_library(
                native.glob(hdrs, exclude = common_excludes + hdrs_excludes),
         srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes),
         copts = common_copts + select({
-            "@com_github_storypku_rules_folly//bazel:linux_x86_64": ["-mpclmul"],
+            "@com_github_zhuangAnjun_rules_folly//bazel:linux_x86_64": ["-mpclmul"],
             "//conditions:default": [],
         }),
         includes = ["."],

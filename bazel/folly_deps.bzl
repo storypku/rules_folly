@@ -32,7 +32,7 @@ glog_library(with_gflags = {})
             native.new_local_repository,
             name = "double-conversion",
             path = "/usr/include",
-            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:double-conversion.BUILD",
+            build_file = "@com_github_zhuangAnjun_rules_folly//third_party/syslibs:double-conversion.BUILD",
         )
     else:
         maybe(
@@ -48,7 +48,7 @@ glog_library(with_gflags = {})
             native.new_local_repository,
             name = "zlib",
             path = "/usr/include",
-            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:zlib.BUILD",
+            build_file = "@com_github_zhuangAnjun_rules_folly//third_party/syslibs:zlib.BUILD",
         )
     else:
         maybe(
@@ -56,7 +56,7 @@ glog_library(with_gflags = {})
             name = "zlib",
             sha256 = "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
             strip_prefix = "zlib-1.2.11",
-            build_file = "@com_github_storypku_rules_folly//third_party/zlib:zlib.BUILD",
+            build_file = "@com_github_zhuangAnjun_rules_folly//third_party/zlib:zlib.BUILD",
             urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
         )
 
@@ -65,13 +65,13 @@ glog_library(with_gflags = {})
             native.new_local_repository,
             name = "com_github_google_snappy",
             path = "/usr/include",
-            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:snappy.BUILD",
+            build_file = "@com_github_zhuangAnjun_rules_folly//third_party/syslibs:snappy.BUILD",
         )
     else:
         maybe(
             http_archive,
             name = "com_github_google_snappy",
-            build_file = "@com_github_storypku_rules_folly//third_party/snappy:snappy.BUILD",
+            build_file = "@com_github_zhuangAnjun_rules_folly//third_party/snappy:snappy.BUILD",
             strip_prefix = "snappy-1.1.9",
             sha256 = "75c1fbb3d618dd3a0483bff0e26d0a92b495bbe5059c8b4f1c962b478b6e06e7",
             urls = [
@@ -85,7 +85,7 @@ glog_library(with_gflags = {})
             native.new_local_repository,
             name = "com_github_libevent_libevent",
             path = "/usr/include",
-            build_file = "@com_github_storypku_rules_folly//third_party/syslibs:libevent.BUILD",
+            build_file = "@com_github_zhuangAnjun_rules_folly//third_party/syslibs:libevent.BUILD",
         )
     else:
         maybe(
@@ -94,7 +94,7 @@ glog_library(with_gflags = {})
             sha256 = "316ddb401745ac5d222d7c529ef1eada12f58f6376a66c1118eee803cb70f83d",
             urls = ["https://github.com/libevent/libevent/archive/release-2.1.8-stable.tar.gz"],
             strip_prefix = "libevent-release-2.1.8-stable",
-            build_file = "@com_github_storypku_rules_folly//third_party/libevent:libevent.BUILD",
+            build_file = "@com_github_zhuangAnjun_rules_folly//third_party/libevent:libevent.BUILD",
         )
 
     maybe(
@@ -103,7 +103,7 @@ glog_library(with_gflags = {})
         urls = ["https://github.com/fmtlib/fmt/archive/8.0.1.tar.gz"],
         sha256 = "b06ca3130158c625848f3fb7418f235155a4d389b2abc3a6245fb01cb0eb1e01",
         strip_prefix = "fmt-8.0.1",
-        build_file = "@com_github_storypku_rules_folly//third_party/fmtlib:fmtlib.BUILD",
+        build_file = "@com_github_zhuangAnjun_rules_folly//third_party/fmtlib:fmtlib.BUILD",
     )
 
     # Note(jiaming):
@@ -129,13 +129,13 @@ glog_library(with_gflags = {})
      #     native.new_local_repository,
      #     name = "openssl",
      #     path = "/usr/include",
-     #     build_file = "@com_github_storypku_rules_folly//third_party/syslibs:openssl.BUILD",
+     #     build_file = "@com_github_zhuangAnjun_rules_folly//third_party/syslibs:openssl.BUILD",
      # )
     maybe(
       http_archive,
       name = "openssl",
       strip_prefix = "openssl-openssl-3.0.6",
-      build_file = "@com_github_storypku_rules_folly//third_party/syslibs:openssl.BUILD",
+      build_file = "@com_github_zhuangAnjun_rules_folly//third_party/syslibs:openssl.BUILD",
       urls = [
         "https://github.com/openssl/openssl/archive/refs/tags/openssl-3.0.6.tar.gz",
       ],
@@ -166,9 +166,9 @@ glog_library(with_gflags = {})
     folly_version = "2022.11.14.00"
     http_archive(
         name = "folly",
-        # build_file = "@com_github_storypku_rules_folly//third_party/folly:folly.BUILD",
+        # build_file = "@com_github_zhuangAnjun_rules_folly//third_party/folly:folly.BUILD",
         build_file_content = """
-load("@com_github_storypku_rules_folly//bazel:folly.bzl", "folly_library")
+load("@com_github_zhuangAnjun_rules_folly//bazel:folly.bzl", "folly_library")
 package(default_visibility = ["//visibility:public"])
 folly_library(with_gflags = {})
 """.format(with_gflags),
@@ -179,7 +179,7 @@ folly_library(with_gflags = {})
         ],
         patch_args = ["-p1"],
         patches = [
-            "@com_github_storypku_rules_folly//third_party/folly:folly_2022_11_14_00.patch",
+            "@com_github_zhuangAnjun_rules_folly//third_party/folly:folly_2022_11_14_00.patch",
         ],
     )
     http_archive(
