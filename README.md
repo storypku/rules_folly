@@ -53,7 +53,5 @@ folly_deps(with_gflags = 0)
   ],
 ```
 
-## ROADMAP
-1. (Done) Make it work for recent versions of Folly
-2. (Done) Make rules_folly configurable, e.g., whether openssl/boringssl should be used,
-    if glog was with gflags support, etc.
+## CHANGELOG
+2020.11.24 Support boringssl and folly verison 2022.11.14.00
