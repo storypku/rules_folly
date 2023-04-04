@@ -64,7 +64,10 @@ def folly_library(
         "folly/python/fibers.cpp",
         "folly/python/GILAwareManualExecutor.cpp",
         "folly/cybld/folly/executor.cpp",
-        "folly/experimental/symbolizer/Addr2Line.cpp",
+        "folly/experimental/symbolizer/tool/*.cpp",
+        "folly/experimental/tool/*.cpp",
+        "folly/experimental/io/tool/*.cpp",
+        "folly/tool/*.cpp",
     ])
 
     # Explicitly include utility library code from inside
