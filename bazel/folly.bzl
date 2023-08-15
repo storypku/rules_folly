@@ -1,7 +1,6 @@
-# Implement a macro folly_library() that the BUILD file can load.
+# Implements a macro folly_library() that the BUILD file can load.
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
-# Ref: https://github.com/google/glog/blob/v0.5.0/bazel/glog.bzl
 def _expand_template_impl(ctx):
     ctx.actions.expand_template(
         template = ctx.file.template,
@@ -18,158 +17,34 @@ expand_template = rule(
     },
 )
 
-def _dict_union(x, y):
-    z = {}
-    z.update(x)
-    z.update(y)
-    return z
+_folly_common_copts = [
+    "-std=gnu++1z",
+    "-fPIC",
+    "-finput-charset=UTF-8",
+    "-fsigned-char",
+    "-fopenmp",
+    "-faligned-new",
+    "-Wall",
+    "-Wno-deprecated",
+    "-Wno-deprecated-declarations",
+    "-Wno-sign-compare",
+    "-Wno-unused",
+    "-Wunused-label",
+    "-Wunused-result",
+    "-Wshadow-compatible-local",
+    "-Wno-noexcept-type",
+]
 
-def folly_library(
-        with_gflags = 1,
-        with_jemalloc = 0,
-        with_bz2 = 0,
-        with_lzma = 0,
-        with_lz4 = 0,
-        with_zstd = 0,
-        with_unwind = 0,
-        with_dwarf = 0,
-        with_libaio = 0,
-        with_liburing = 0,
-        enable_testing = 0):
-    # Exclude tests, benchmarks, and other standalone utility executables from the
-    # library sources.  Test sources are listed separately below.
-    common_excludes = [
-        "folly/build/**",
-        "folly/logging/example/**",
-        "folly/tools/**",
-    ]
-
-    hdrs = native.glob(["folly/**/*.h"], exclude = common_excludes + [
-        "folly/test/**/*.h",
-        "folly/**/test/**/*.h",
-        "folly/python/fibers.h",
-        "folly/python/GILAwareManualExecutor.h",
-    ])
-    srcs = native.glob(["folly/**/*.cpp"], exclude = common_excludes + [
-        "folly/Benchmark.cpp",
-        "folly/test/**/*.cpp",
-        "folly/**/test/**/*.cpp",
-        "folly/**/*Test.cpp",
-        "folly/experimental/JSONSchemaTester.cpp",
-        "folly/experimental/io/HugePageUtil.cpp",
-        "folly/python/error.cpp",
-        "folly/python/executor.cpp",
-        "folly/python/fibers.cpp",
-        "folly/python/GILAwareManualExecutor.cpp",
-        "folly/cybld/folly/executor.cpp",
-        "folly/experimental/symbolizer/Addr2Line.cpp",
-    ])
-
-    # Explicitly include utility library code from inside
-    # test subdirs
-    hdrs = hdrs + [
-        "folly/container/test/F14TestUtil.h",
-        "folly/container/test/TrackingTypes.h",
-        "folly/io/async/test/AsyncSSLSocketTest.h",
-        "folly/io/async/test/AsyncSocketTest.h",
-        "folly/io/async/test/AsyncSocketTest2.h",
-        "folly/io/async/test/BlockingSocket.h",
-        "folly/io/async/test/MockAsyncSocket.h",
-        "folly/io/async/test/MockAsyncServerSocket.h",
-        "folly/io/async/test/MockAsyncSSLSocket.h",
-        "folly/io/async/test/MockAsyncTransport.h",
-        "folly/io/async/test/MockAsyncUDPSocket.h",
-        "folly/io/async/test/MockTimeoutManager.h",
-        "folly/io/async/test/ScopedBoundPort.h",
-        "folly/io/async/test/SocketPair.h",
-        "folly/io/async/test/TestSSLServer.h",
-        "folly/io/async/test/TimeUtil.h",
-        "folly/io/async/test/UndelayedDestruction.h",
-        "folly/io/async/test/Util.h",
-        "folly/synchronization/test/Semaphore.h",
-        "folly/test/DeterministicSchedule.h",
-        "folly/test/JsonTestUtil.h",
-        "folly/test/TestUtils.h",
-    ]
-
-    srcs = srcs + [
-        "folly/io/async/test/ScopedBoundPort.cpp",
-        "folly/io/async/test/SocketPair.cpp",
-        "folly/io/async/test/TimeUtil.cpp",
-    ]
-
-    # Exclude specific sources if we do not have third-party libraries
-    # required to build them
-    common_excludes = []
-
-    # NOTE(storypku): hardcode with_libsodium set to False for now
-    # Ref: https://github.com/facebook/folly/blob/v2021.09.06.00/CMakeLists.txt#L270
-    hdrs_excludes = [
-        "folly/experimental/crypto/Blake2xb.h",
-        "folly/experimental/crypto/detail/LtHashInternal.h",
-        "folly/experimental/crypto/LtHash-inl.h",
-        "folly/experimental/crypto/LtHash.h",
-    ]
-
-    srcs_excludes = [
-        "folly/experimental/crypto/Blake2xb.cpp",
-        "folly/experimental/crypto/detail/MathOperation_AVX2.cpp",
-        "folly/experimental/crypto/detail/MathOperation_Simple.cpp",
-        "folly/experimental/crypto/detail/MathOperation_SSE2.cpp",
-        "folly/experimental/crypto/LtHash.cpp",
-    ]
-
-    if with_libaio == 0:
-        hdrs_excludes = hdrs_excludes + [
-            "folly/experimental/io/AsyncIO.h",
-        ]
-        srcs_excludes = srcs_excludes + [
-            "folly/experimental/io/AsyncIO.cpp",
-        ]
-
-    if with_liburing == 0:
-        hdrs_excludes = hdrs_excludes + [
-            "folly/experimental/io/IoUring.h",
-            "folly/experimental/io/IoUringBackend.h",
-        ]
-        srcs_excludes = srcs_excludes + [
-            "folly/experimental/io/IoUring.cpp",
-            "folly/experimental/io/IoUringBackend.cpp",
-        ]
-    if with_libaio == 0 and with_liburing == 0:
-        hdrs_excludes = hdrs_excludes + [
-            "folly/experimental/io/AsyncBase.h",
-            "folly/experimental/io/PollIoBackend.h",
-            "folly/experimental/io/SimpleAsyncIO.h",
-        ]
-        srcs_excludes = srcs_excludes + [
-            "folly/experimental/io/AsyncBase.cpp",
-            "folly/experimental/io/PollIoBackend.cpp",
-            "folly/experimental/io/SimpleAsyncIO.cpp",
-        ]
-
-    # NOTE(storypku):
-    # Compare header and source files with that of CMake
-    # my_hdrs = native.glob(hdrs, exclude = common_excludes + hdrs_excludes)
-    # print("=== # of headers: {} ===".format(len(my_hdrs)))
-    # print("===== HEADERS END =====")
-    # my_srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes)
-    # print("=== # of srcs: {} ===".format(len(my_srcs)))
-    # for my_src in my_srcs:
-    #    print(my_src)
-    # print("===== SRCS END =====")
-    if with_gflags == 0:
-        hdrs_excludes = hdrs_excludes + [
-            "folly/experimental/NestedCommandLineApp.h",
-            "folly/experimental/ProgramOptions.h",
-        ]
-        srcs_excludes = srcs_excludes + [
-            "folly/experimental/NestedCommandLineApp.cpp",
-            "folly/experimental/ProgramOptions.cpp",
-        ]
-
-    # TODO(jiaming)
-    common_defs = {
+def folly_config(
+        with_gflags,
+        with_jemalloc,
+        with_bz2,
+        with_lzma,
+        with_lz4,
+        with_zstd,
+        with_unwind,
+        with_dwarf):
+    return {
         "@FOLLY_HAVE_PTHREAD@": "1",
         "@FOLLY_HAVE_PTHREAD_ATFORK@": "1",
         "@FOLLY_HAVE_ACCEPT4@": "1",
@@ -190,15 +65,10 @@ def folly_library(
         "@FOLLY_HAVE_MALLOC_USABLE_SIZE@": "1",
         "@FOLLY_HAVE_INT128_T@": "0",
         "@FOLLY_HAVE_WCHAR_SUPPORT@": "1",
-        "@define FOLLY_HAVE_EXTRANDOM_SFMT19937@": "1",
+        "@FOLLY_HAVE_EXTRANDOM_SFMT19937@": "1",
         "@HAVE_VSNPRINTF_ERRORS@": "1",
         "@FOLLY_HAVE_SHADOW_LOCAL_WARNINGS@": "1",
         "@FOLLY_SUPPORT_SHARED_LIBRARY@": "1",
-        "@FOLLY_DEMANGLE_MAX_SYMBOL_SIZE": "1024",
-    }
-
-    # Note(storypku):
-    total_defs = _dict_union(common_defs, {
         "@FOLLY_USE_LIBSTDCPP@": "1",
         "@FOLLY_USE_LIBCPP@": "0",
         "@FOLLY_HAVE_LIBGFLAGS@": str(with_gflags),
@@ -220,7 +90,58 @@ def folly_library(
         "@FOLLY_USE_SYMBOLIZER@": "1",
         "@FOLLY_LIBRARY_SANITIZE_ADDRESS@": "0",
         "@FOLLY_HAVE_LIBRT@": "0",
-    })
+    }
+
+def folly_library(
+        name,
+        with_gflags = 1,
+        with_jemalloc = 0,
+        with_bz2 = 0,
+        with_lzma = 0,
+        with_lz4 = 0,
+        with_zstd = 0,
+        with_unwind = 0,
+        with_dwarf = 0):
+    # Exclude tests, benchmarks, and other standalone utility executables from the
+    # library sources. Test sources are listed separately below.
+    common_excludes = [
+        "folly/**/*Benchmark.cpp",
+        "folly/**/*Test.cpp",
+        "folly/**/test/**",
+        "folly/**/tool/**",
+        "folly/build/**",
+        "folly/docs/**",
+        "folly/docs/example/**",
+        "folly/logging/example/**",
+    ]
+
+    # TODO(pkomlev): Skip python stuff for now.
+    common_excludes = common_excludes + [
+        "folly/python/**",
+    ]
+
+    hdrs = native.glob(["folly/**/*.h"], exclude = common_excludes + [])
+    srcs = native.glob(["folly/**/*.cpp"], exclude = common_excludes + [])
+
+    # Exclude specific sources if we do not have third-party libraries
+    # required to build them
+    common_excludes = []
+
+    # NOTE(pkomlev): exclude libsodium dependent code for now.
+    hdrs_excludes = [
+        "folly/experimental/crypto/Blake2xb.h",
+        "folly/experimental/crypto/detail/LtHashInternal.h",
+        "folly/experimental/crypto/LtHash-inl.h",
+        "folly/experimental/crypto/LtHash.h",
+    ]
+
+    srcs_excludes = [
+        "folly/experimental/crypto/Blake2xb.cpp",
+        "folly/experimental/crypto/detail/MathOperation_AVX2.cpp",
+        "folly/experimental/crypto/detail/MathOperation_Simple.cpp",
+        "folly/experimental/crypto/detail/MathOperation_SSE2.cpp",
+        "folly/experimental/crypto/LtHash.cpp",
+    ]
 
     native.genrule(
         name = "folly_config_in_h",
@@ -238,7 +159,16 @@ def folly_library(
         name = "folly_config_h_unstripped",
         template = "folly/folly-config.h.in",
         out = "folly/folly-config.h.unstripped",
-        substitutions = total_defs,
+        substitutions = folly_config(
+            with_gflags,
+            with_jemalloc,
+            with_bz2,
+            with_lzma,
+            with_lz4,
+            with_zstd,
+            with_unwind,
+            with_dwarf,
+        ),
     )
 
     native.genrule(
@@ -253,31 +183,13 @@ def folly_library(
         tools = ["@com_github_storypku_rules_folly//bazel:strip_config_h.sh"],
     )
 
-    common_copts = [
-        "-std=gnu++1z",
-        "-fPIC",
-        "-finput-charset=UTF-8",
-        "-fsigned-char",
-        "-fopenmp",
-        "-faligned-new",
-        "-Wall",
-        "-Wno-deprecated",
-        "-Wno-deprecated-declarations",
-        "-Wno-sign-compare",
-        "-Wno-unused",
-        "-Wunused-label",
-        "-Wunused-result",
-        "-Wshadow-compatible-local",
-        "-Wno-noexcept-type",
-    ]
-
     # CHECK_CXX_COMPILER_FLAG(-mpclmul COMPILER_HAS_M_PCLMUL)
     cc_library(
         name = "folly",
         hdrs = ["folly_config_h"] +
                native.glob(hdrs, exclude = common_excludes + hdrs_excludes),
         srcs = native.glob(srcs, exclude = common_excludes + srcs_excludes),
-        copts = common_copts + select({
+        copts = _folly_common_copts + select({
             "@com_github_storypku_rules_folly//bazel:linux_x86_64": ["-mpclmul"],
             "//conditions:default": [],
         }),
@@ -285,18 +197,7 @@ def folly_library(
         linkopts = [
             "-pthread",
             "-ldl",
-            "-lstdc++fs",
         ],
-        # if (FOLLY_STDLIB_LIBSTDCXX AND NOT FOLLY_STDLIB_LIBSTDCXX_GE_9)
-        # list (APPEND CMAKE_REQUIRED_LIBRARIES stdc++fs)
-        # list (APPEND FOLLY_LINK_LIBRARIES stdc++fs)
-        # endif()
-        # if (FOLLY_STDLIB_LIBCXX AND NOT FOLLY_STDLIB_LIBCXX_GE_9)
-        # list (APPEND CMAKE_REQUIRED_LIBRARIES c++fs)
-        # list (APPEND FOLLY_LINK_LIBRARIES c++fs)
-        # endif ()
-        # Ref: https://docs.bazel.build/versions/main/be/c-cpp.html#cc_library.linkstatic
-        # linkstatic = True,
         visibility = ["//visibility:public"],
         deps = [
             "@boost//:algorithm",
@@ -326,63 +227,63 @@ def folly_library(
         ] if with_gflags else []),
     )
 
+def folly_testing(name):
     cc_library(
         name = "follybenchmark",
         srcs = ["folly/Benchmark.cpp"],
         deps = [
             ":folly",
         ],
-        copts = common_copts,
+        copts = _folly_common_copts,
     )
 
-    if enable_testing:
-        cc_library(
-            name = "folly_test_support",
-            srcs = [
-                "folly/test/common/TestMain.cpp",
-                "folly/test/FBVectorTestUtil.cpp",
-                "folly/test/DeterministicSchedule.cpp",
-                "folly/test/SingletonTestStructs.cpp",
-                "folly/test/SocketAddressTestHelper.cpp",
-                "folly/experimental/test/CodingTestUtils.cpp",
-                "folly/futures/test/TestExecutor.cpp",
-                "folly/io/async/test/ScopedBoundPort.cpp",
-                "folly/io/async/test/SocketPair.cpp",
-                "folly/logging/test/ConfigHelpers.cpp",
-                "folly/logging/test/TestLogHandler.cpp",
-                "folly/io/async/test/SSLUtil.cpp",
-                "folly/io/async/test/TestSSLServer.cpp",
-                "folly/io/async/test/TimeUtil.cpp",
-            ],
-            hdrs = [
-                "folly/test/FBVectorTestUtil.h",
-                "folly/test/DeterministicSchedule.h",
-                "folly/test/SingletonTestStructs.h",
-                "folly/test/SocketAddressTestHelper.h",
-                "folly/container/test/F14TestUtil.h",
-                "folly/container/test/TrackingTypes.h",
-                "folly/experimental/test/CodingTestUtils.h",
-                "folly/futures/test/TestExecutor.h",
-                "folly/io/async/test/BlockingSocket.h",
-                "folly/io/async/test/MockAsyncServerSocket.h",
-                "folly/io/async/test/MockAsyncSocket.h",
-                "folly/io/async/test/MockAsyncSSLSocket.h",
-                "folly/io/async/test/MockAsyncTransport.h",
-                "folly/io/async/test/MockAsyncUDPSocket.h",
-                "folly/io/async/test/MockTimeoutManager.h",
-                "folly/io/async/test/ScopedBoundPort.h",
-                "folly/io/async/test/SocketPair.h",
-                "folly/io/async/test/SSLUtil.h",
-                "folly/io/async/test/TestSSLServer.h",
-                "folly/io/async/test/TimeUtil.h",
-                "folly/io/async/test/UndelayedDestruction.h",
-                "folly/io/async/test/Util.h",
-                "folly/logging/test/ConfigHelpers.h",
-                "folly/logging/test/TestLogHandler.h",
-            ],
-            deps = [
-                ":follybenchmark",
-                "@com_github_google_glog//:glog",
-                "@com_google_googletest//:gtest",
-            ],
-        )
+    cc_library(
+        name = "folly_test_util",
+        srcs = [
+            "folly/test/common/TestMain.cpp",
+            "folly/test/FBVectorTestUtil.cpp",
+            "folly/test/DeterministicSchedule.cpp",
+            "folly/test/SingletonTestStructs.cpp",
+            "folly/test/SocketAddressTestHelper.cpp",
+            "folly/experimental/test/CodingTestUtils.cpp",
+            "folly/futures/test/TestExecutor.cpp",
+            "folly/io/async/test/ScopedBoundPort.cpp",
+            "folly/io/async/test/SocketPair.cpp",
+            "folly/logging/test/ConfigHelpers.cpp",
+            "folly/logging/test/TestLogHandler.cpp",
+            "folly/io/async/test/SSLUtil.cpp",
+            "folly/io/async/test/TestSSLServer.cpp",
+            "folly/io/async/test/TimeUtil.cpp",
+        ],
+        hdrs = [
+            "folly/test/FBVectorTestUtil.h",
+            "folly/test/DeterministicSchedule.h",
+            "folly/test/SingletonTestStructs.h",
+            "folly/test/SocketAddressTestHelper.h",
+            "folly/container/test/F14TestUtil.h",
+            "folly/container/test/TrackingTypes.h",
+            "folly/experimental/test/CodingTestUtils.h",
+            "folly/futures/test/TestExecutor.h",
+            "folly/io/async/test/BlockingSocket.h",
+            "folly/io/async/test/MockAsyncServerSocket.h",
+            "folly/io/async/test/MockAsyncSocket.h",
+            "folly/io/async/test/MockAsyncSSLSocket.h",
+            "folly/io/async/test/MockAsyncTransport.h",
+            "folly/io/async/test/MockAsyncUDPSocket.h",
+            "folly/io/async/test/MockTimeoutManager.h",
+            "folly/io/async/test/ScopedBoundPort.h",
+            "folly/io/async/test/SocketPair.h",
+            "folly/io/async/test/SSLUtil.h",
+            "folly/io/async/test/TestSSLServer.h",
+            "folly/io/async/test/TimeUtil.h",
+            "folly/io/async/test/UndelayedDestruction.h",
+            "folly/io/async/test/Util.h",
+            "folly/logging/test/ConfigHelpers.h",
+            "folly/logging/test/TestLogHandler.h",
+        ],
+        deps = [
+            ":follybenchmark",
+            "@com_github_google_glog//:glog",
+            "@com_google_googletest//:gtest",
+        ],
+    )

@@ -10,15 +10,15 @@ exports_files([
 config_setting(
     name = "linux_aarch64",
     constraint_values = [
-        "@bazel_tools//platforms:linux",
-        "@bazel_tools//platforms:aarch64",
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
     ],
 )
 
 config_setting(
     name = "linux_x86_64",
     constraint_values = [
-        "@bazel_tools//platforms:linux",
-        "@bazel_tools//platforms:x86_64",
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
     ],
 )

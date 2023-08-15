@@ -1,7 +1,12 @@
-# Copied from https://github.com/protocolbuffers/protobuf/blob/3.17.x/third_party/zlib.BUILD
+#
+# NOTE(pkomlev): borrowed from https://github.com/protocolbuffers/protobuf/blob/main/third_party/zlib.BUILD
+#
+
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 licenses(["notice"])  # BSD/MIT-like license (for zlib)
+
+exports_files(["zlib.BUILD"])
 
 _ZLIB_HEADERS = [
     "crc32.h",
@@ -26,7 +31,11 @@ genrule(
     name = "copy_public_headers",
     srcs = _ZLIB_HEADERS,
     outs = _ZLIB_PREFIXED_HEADERS,
-    cmd = "cp $(SRCS) $(@D)/zlib/include/",
+    cmd_bash = "cp $(SRCS) $(@D)/zlib/include/",
+    cmd_bat = " && ".join(
+        ["@copy /Y $(location %s) $(@D)\\zlib\\include\\  >NUL" %
+         s for s in _ZLIB_HEADERS],
+    ),
 )
 
 cc_library(
@@ -53,8 +62,9 @@ cc_library(
     ] + _ZLIB_HEADERS,
     hdrs = _ZLIB_PREFIXED_HEADERS,
     copts = select({
-        "@bazel_tools//src/conditions:windows": [],
+        "@platforms//os:windows": [],
         "//conditions:default": [
+            "-Wno-deprecated-non-prototype",
             "-Wno-unused-variable",
             "-Wno-implicit-function-declaration",
         ],
