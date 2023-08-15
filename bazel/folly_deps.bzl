@@ -44,7 +44,7 @@ def folly_deps():
         http_archive,
         name = "zlib",
         strip_prefix = "zlib-1.2.13",
-        build_file = "@com_github_storypku_rules_folly//third_party/zlib:zlib.BUILD",
+        build_file = "@com_github_pkomlev_rules_folly//third_party/zlib:zlib.BUILD",
         sha256 = "1525952a0a567581792613a9723333d7f8cc20b87a81f920fb8bc7e3f2251428",
         urls = ["https://github.com/madler/zlib/archive/v1.2.13.tar.gz"],
     )
@@ -52,7 +52,7 @@ def folly_deps():
     maybe(
         http_archive,
         name = "com_github_google_snappy",
-        build_file = "@com_github_storypku_rules_folly//third_party/snappy:snappy.BUILD",
+        build_file = "@com_github_pkomlev_rules_folly//third_party/snappy:snappy.BUILD",
         strip_prefix = "snappy-1.1.10",
         sha256 = "49d831bffcc5f3d01482340fe5af59852ca2fe76c3e05df0e67203ebbe0f1d90",
         urls = [
@@ -66,7 +66,7 @@ def folly_deps():
         sha256 = "7180a979aaa7000e1264da484f712d403fcf7679b1e9212c4e3d09f5c93efc24",
         urls = ["https://github.com/libevent/libevent/archive/release-2.1.12-stable.tar.gz"],
         strip_prefix = "libevent-release-2.1.12-stable",
-        build_file = "@com_github_storypku_rules_folly//third_party/libevent:libevent.BUILD",
+        build_file = "@com_github_pkomlev_rules_folly//third_party/libevent:libevent.BUILD",
     )
 
     maybe(
@@ -75,7 +75,7 @@ def folly_deps():
         urls = ["https://github.com/fmtlib/fmt/archive/10.1.0.tar.gz"],
          sha256 = "deb0a3ad2f5126658f2eefac7bf56a042488292de3d7a313526d667f3240ca0a",
         strip_prefix = "fmt-10.1.0",
-        build_file = "@com_github_storypku_rules_folly//third_party/fmtlib:fmtlib.BUILD",
+        build_file = "@com_github_pkomlev_rules_folly//third_party/fmtlib:fmtlib.BUILD",
     )
 
     rules_boost_commit = "cfa585b1b5843993b70aa52707266dc23b3282d0"
@@ -93,7 +93,7 @@ def folly_deps():
         native.new_local_repository,
         name = "openssl",
         path = "/usr/include",
-        build_file = "@com_github_storypku_rules_folly//third_party/syslibs:openssl.BUILD",
+        build_file = "@com_github_pkomlev_rules_folly//third_party/syslibs:openssl.BUILD",
     )
 
     gtest_version = "1.14.0"
@@ -112,7 +112,7 @@ def folly_deps():
         build_file_content = """
 package(default_visibility = ["//visibility:public"])
 
-load("@com_github_storypku_rules_folly//bazel:folly.bzl", "folly_library", "folly_testing")
+load("@com_github_pkomlev_rules_folly//bazel:folly.bzl", "folly_library", "folly_testing")
 
 folly_library("folly")
 folly_testing("folly")
@@ -124,6 +124,6 @@ folly_testing("folly")
         ],
         patch_args = ["-p1"],
         patches = [
-            "@com_github_storypku_rules_folly//third_party/folly:p00_double_conversion_include_fix.patch",
+            "@com_github_pkomlev_rules_folly//third_party/folly:p00_double_conversion_include_fix.patch",
         ],
     )

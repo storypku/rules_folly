@@ -1,4 +1,4 @@
-workspace(name = "com_github_storypku_rules_folly")
+workspace(name = "com_github_pkomlev_rules_folly")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
